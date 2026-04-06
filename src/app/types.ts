@@ -28,4 +28,5 @@ export interface NotaServico {
   servicos: Servico[];
   observacoes?: string;
   total: number;
+  status: 'pendente' | 'pago';
 }

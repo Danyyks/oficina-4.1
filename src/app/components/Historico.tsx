@@ -1,6 +1,7 @@
-import { ArrowLeft, FileText, Download } from 'lucide-react';
+import { ArrowLeft, FileText } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { Button } from './ui/button';
+import { Badge } from './ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 
 interface HistoricoProps {
@@ -57,9 +58,14 @@ export function Historico({ onNavigate }: HistoricoProps) {
                             </p>
                           </div>
                         </div>
-                        <div className="text-right">
+                        <div className="text-right flex flex-col items-end gap-1">
                           <p className="text-xl">R$ {nota.total.toFixed(2)}</p>
                           <p className="text-sm text-gray-600">{nota.servicos.length} serviço(s)</p>
+                          {nota.status === 'pago' ? (
+                            <Badge className="bg-green-100 text-green-800 border-green-200">Pago</Badge>
+                          ) : (
+                            <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">Pendente</Badge>
+                          )}
                         </div>
                       </div>
                     </div>

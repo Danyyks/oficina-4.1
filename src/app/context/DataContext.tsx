@@ -12,6 +12,9 @@ interface DataContextType {
   updateVeiculo: (id: string, veiculo: Partial<Veiculo>) => void;
   deleteVeiculo: (id: string) => void;
   addNota: (nota: NotaServico) => void;
+  updateNota: (id: string, nota: Partial<NotaServico>) => void;
+  deleteNota: (id: string) => void;
+  nextNumeroNota: () => string;
   getClienteById: (id: string) => Cliente | undefined;
   getVeiculoById: (id: string) => Veiculo | undefined;
   getVeiculosByClienteId: (clienteId: string) => Veiculo[];
@@ -35,6 +38,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
     return saved ? JSON.parse(saved) : [];
   });
 
+  const [notaCounter, setNotaCounter] = useState<number>(() => {
+    const saved = localStorage.getItem('notaCounter');
+    return saved ? parseInt(saved, 10) : 0;
+  });
+
   useEffect(() => {
     localStorage.setItem('clientes', JSON.stringify(clientes));
   }, [clientes]);
@@ -46,6 +54,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     localStorage.setItem('notas', JSON.stringify(notas));
   }, [notas]);
+
+  useEffect(() => {
+    localStorage.setItem('notaCounter', notaCounter.toString());
+  }, [notaCounter]);
+
+  const nextNumeroNota = (): string => {
+    const next = notaCounter + 1;
+    setNotaCounter(next);
+    return next.toString().padStart(4, '0');
+  };
 
   const addCliente = (cliente: Cliente) => {
     setClientes(prev => [...prev, cliente]);
@@ -76,6 +94,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setNotas(prev => [nota, ...prev]);
   };
 
+  const updateNota = (id: string, notaUpdate: Partial<NotaServico>) => {
+    setNotas(prev => prev.map(n => n.id === id ? { ...n, ...notaUpdate } : n));
+  };
+
+  const deleteNota = (id: string) => {
+    setNotas(prev => prev.filter(n => n.id !== id));
+  };
+
   const getClienteById = (id: string) => {
     return clientes.find(c => c.id === id);
   };
@@ -101,6 +127,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
         updateVeiculo,
         deleteVeiculo,
         addNota,
+        updateNota,
+        deleteNota,
+        nextNumeroNota,
         getClienteById,
         getVeiculoById,
         getVeiculosByClienteId,

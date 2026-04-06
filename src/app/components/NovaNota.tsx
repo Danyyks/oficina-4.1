@@ -9,26 +9,25 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Textarea } from './ui/textarea';
 import { NotaServico, Servico } from '../types';
 import { toast } from 'sonner';
-import { gerarNotaPDF } from '../utils/gerarPDF';
 
 interface NovaNotaProps {
   onNavigate: (page: string) => void;
+  notaParaEditar?: NotaServico;
 }
 
-export function NovaNota({ onNavigate }: NovaNotaProps) {
-  const { clientes, notas, addNota, getClienteById, getVeiculoById, getVeiculosByClienteId } = useData();
+export function NovaNota({ onNavigate, notaParaEditar }: NovaNotaProps) {
+  const { clientes, addNota, updateNota, nextNumeroNota, getVeiculosByClienteId } = useData();
 
-  const [selectedClienteId, setSelectedClienteId] = useState('');
-  const [selectedVeiculoId, setSelectedVeiculoId] = useState('');
-  const [servicos, setServicos] = useState<Servico[]>([]);
-  const [observacoes, setObservacoes] = useState('');
+  const isEditing = !!notaParaEditar;
+
+  const [selectedClienteId, setSelectedClienteId] = useState(notaParaEditar?.clienteId ?? '');
+  const [selectedVeiculoId, setSelectedVeiculoId] = useState(notaParaEditar?.veiculoId ?? '');
+  const [servicos, setServicos] = useState<Servico[]>(notaParaEditar?.servicos ?? []);
+  const [observacoes, setObservacoes] = useState(notaParaEditar?.observacoes ?? '');
   const [servicoForm, setServicoForm] = useState({ nome: '', valor: '' });
-  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   const clienteVeiculos = selectedClienteId ? getVeiculosByClienteId(selectedClienteId) : [];
   const total = servicos.reduce((sum, s) => sum + s.valor, 0);
-  const cliente = selectedClienteId ? getClienteById(selectedClienteId) : undefined;
-  const veiculo = selectedVeiculoId ? getVeiculoById(selectedVeiculoId) : undefined;
 
   const handleAddServico = () => {
     if (!servicoForm.nome || !servicoForm.valor) {
@@ -54,68 +53,37 @@ export function NovaNota({ onNavigate }: NovaNotaProps) {
     setServicos(servicos.filter(s => s.id !== id));
   };
 
-  const criarNota = (): NotaServico => ({
-    id: Date.now().toString(),
-    numero: (notas.length + 1).toString().padStart(4, '0'),
-    data: new Date().toISOString(),
-    clienteId: selectedClienteId,
-    veiculoId: selectedVeiculoId,
-    servicos,
-    observacoes,
-    total,
-  });
-
   const handleSalvarNota = () => {
     if (!selectedClienteId || !selectedVeiculoId || servicos.length === 0) {
       toast.error('Preencha todos os campos obrigatórios');
       return;
     }
-    const nota = criarNota();
-    addNota(nota);
-    toast.success('Nota de serviço criada com sucesso!');
-    setTimeout(() => onNavigate(`nota-${nota.id}`), 500);
-  };
 
-  const handleBaixarEEnviar = async () => {
-    if (!selectedClienteId || !selectedVeiculoId || servicos.length === 0) {
-      toast.error('Preencha todos os campos obrigatórios');
-      return;
-    }
-    if (!cliente) return;
-
-    const nota = criarNota();
-    addNota(nota);
-
-    // Abre o WhatsApp de forma síncrona (antes de qualquer await)
-    const mensagem = `Olá ${cliente.nome}! Segue a nota de serviço #${nota.numero} da Oficina mecânica 4.1.\n\nTotal: R$ ${total.toFixed(2)}`;
-    const telefone = cliente.telefone.replace(/\D/g, '');
-    window.open(
-      `https://wa.me/55${telefone}?text=${encodeURIComponent(mensagem)}`,
-      '_blank'
-    );
-
-    // Gera e baixa o PDF
-    setIsGeneratingPdf(true);
-    try {
-      await gerarNotaPDF({
-        numero: nota.numero,
-        data: nota.data,
-        clienteNome: cliente.nome,
-        clienteTelefone: cliente.telefone,
-        veiculoMarca: veiculo?.marca ?? '',
-        veiculoModelo: veiculo?.modelo ?? '',
-        veiculoPlaca: veiculo?.placa ?? '',
-        veiculoAno: veiculo?.ano,
+    if (isEditing && notaParaEditar) {
+      updateNota(notaParaEditar.id, {
+        clienteId: selectedClienteId,
+        veiculoId: selectedVeiculoId,
         servicos,
-        total,
         observacoes,
+        total,
       });
-      toast.success(`Nota #${nota.numero} salva, PDF baixado e WhatsApp aberto!`);
-    } catch (error) {
-      console.error('Erro ao gerar PDF:', error);
-      toast.error('Erro ao gerar PDF. Tente novamente.');
-    } finally {
-      setIsGeneratingPdf(false);
+      toast.success('Nota atualizada com sucesso!');
+      setTimeout(() => onNavigate(`nota-${notaParaEditar.id}`), 500);
+    } else {
+      const nota: NotaServico = {
+        id: Date.now().toString(),
+        numero: nextNumeroNota(),
+        data: new Date().toISOString(),
+        clienteId: selectedClienteId,
+        veiculoId: selectedVeiculoId,
+        servicos,
+        observacoes,
+        total,
+        status: 'pendente',
+      };
+      addNota(nota);
+      toast.success('Nota de serviço criada com sucesso!');
+      setTimeout(() => onNavigate(`nota-${nota.id}`), 500);
     }
   };
 
@@ -123,11 +91,20 @@ export function NovaNota({ onNavigate }: NovaNotaProps) {
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-5xl mx-auto">
         <div className="mb-6 flex items-center gap-4">
-          <Button variant="outline" onClick={() => onNavigate('dashboard')}>
+          <Button
+            variant="outline"
+            onClick={() =>
+              isEditing && notaParaEditar
+                ? onNavigate(`nota-${notaParaEditar.id}`)
+                : onNavigate('dashboard')
+            }
+          >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Voltar
           </Button>
-          <h1 className="text-3xl">Nova Nota de Serviço</h1>
+          <h1 className="text-3xl">
+            {isEditing ? `Editando Nota #${notaParaEditar?.numero}` : 'Nova Nota de Serviço'}
+          </h1>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
@@ -266,15 +243,7 @@ export function NovaNota({ onNavigate }: NovaNotaProps) {
 
         <div className="flex gap-4">
           <Button onClick={handleSalvarNota} size="lg" className="flex-1">
-            Salvar Nota
-          </Button>
-          <Button
-            onClick={handleBaixarEEnviar}
-            variant="outline"
-            size="lg"
-            disabled={servicos.length === 0 || !cliente || isGeneratingPdf}
-          >
-            {isGeneratingPdf ? 'Gerando PDF...' : 'Baixar e Enviar'}
+            {isEditing ? 'Salvar Alterações' : 'Salvar Nota'}
           </Button>
         </div>
       </div>

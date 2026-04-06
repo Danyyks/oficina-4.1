@@ -1,8 +1,20 @@
 import { useState } from "react";
-import { ArrowLeft, MessageCircle } from "lucide-react";
+import { ArrowLeft, MessageCircle, Trash2, Pencil, CheckCircle, Clock } from "lucide-react";
 import { useData } from "../context/DataContext";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
+import { Badge } from "./ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "./ui/alert-dialog";
 import { toast } from "sonner";
 import { gerarNotaPDFBlob } from "../utils/gerarPDF";
 import logoImage from "../../assets/7188601ef5c7fc783e87deb6439d04e88e0319a4.png";
@@ -13,7 +25,7 @@ interface NotaViewProps {
 }
 
 export function NotaView({ notaId, onNavigate }: NotaViewProps) {
-  const { notas, getClienteById, getVeiculoById } = useData();
+  const { notas, getClienteById, getVeiculoById, deleteNota, updateNota } = useData();
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   const nota = notas.find((n) => n.id === notaId);
@@ -33,6 +45,18 @@ export function NotaView({ notaId, onNavigate }: NotaViewProps) {
       </div>
     );
   }
+
+  const handleDeletarNota = () => {
+    deleteNota(notaId);
+    toast.success("Nota deletada com sucesso!");
+    onNavigate("historico");
+  };
+
+  const handleToggleStatus = () => {
+    const novoStatus = nota.status === 'pago' ? 'pendente' : 'pago';
+    updateNota(notaId, { status: novoStatus });
+    toast.success(novoStatus === 'pago' ? 'Nota marcada como paga!' : 'Nota marcada como pendente.');
+  };
 
   const handleBaixarEEnviar = async () => {
     if (!cliente) return;
@@ -59,7 +83,6 @@ export function NotaView({ notaId, onNavigate }: NotaViewProps) {
 
       const pdfFile = new File([pdfBlob], nomeArquivo, { type: "application/pdf" });
 
-      // Tenta compartilhar com o arquivo via Web Share API (funciona no celular e Windows)
       if (navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
         await navigator.share({
           files: [pdfFile],
@@ -67,7 +90,6 @@ export function NotaView({ notaId, onNavigate }: NotaViewProps) {
         });
         toast.success("Compartilhamento aberto com o PDF anexado!");
       } else {
-        // Fallback: abre o WhatsApp direto na conversa do cliente e baixa o PDF
         window.open(
           `https://wa.me/55${telefone}?text=${encodeURIComponent(mensagem)}`,
           "_blank"
@@ -97,16 +119,79 @@ export function NotaView({ notaId, onNavigate }: NotaViewProps) {
       <div className="max-w-4xl mx-auto">
         <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Button variant="outline" onClick={() => onNavigate("dashboard")}>
+            <Button variant="outline" onClick={() => onNavigate("historico")}>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Voltar
             </Button>
             <h1 className="text-2xl">Nota de Serviço #{nota.numero}</h1>
+            {nota.status === 'pago' ? (
+              <Badge className="bg-green-100 text-green-800 border-green-200">
+                <CheckCircle className="mr-1 h-3 w-3" />
+                Pago
+              </Badge>
+            ) : (
+              <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
+                <Clock className="mr-1 h-3 w-3" />
+                Pendente
+              </Badge>
+            )}
           </div>
-          <Button onClick={handleBaixarEEnviar} disabled={isGeneratingPdf}>
-            <MessageCircle className="mr-2 h-4 w-4" />
-            {isGeneratingPdf ? "Gerando..." : "Baixar e Enviar"}
-          </Button>
+
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={handleToggleStatus}
+              className={nota.status === 'pago'
+                ? 'border-yellow-300 text-yellow-700 hover:bg-yellow-50'
+                : 'border-green-300 text-green-700 hover:bg-green-50'
+              }
+            >
+              {nota.status === 'pago' ? (
+                <>
+                  <Clock className="mr-2 h-4 w-4" />
+                  Marcar Pendente
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  Marcar como Pago
+                </>
+              )}
+            </Button>
+
+            <Button variant="outline" onClick={() => onNavigate(`editar-nota-${nota.id}`)}>
+              <Pencil className="mr-2 h-4 w-4" />
+              Editar
+            </Button>
+
+            <Button onClick={handleBaixarEEnviar} disabled={isGeneratingPdf}>
+              <MessageCircle className="mr-2 h-4 w-4" />
+              {isGeneratingPdf ? "Gerando..." : "Enviar no WhatsApp"}
+            </Button>
+
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive">
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Deletar
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Deletar nota #{nota.numero}?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Esta ação não pode ser desfeita. A nota será removida permanentemente.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleDeletarNota}>
+                    Sim, deletar
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
         </div>
 
         <Card>
