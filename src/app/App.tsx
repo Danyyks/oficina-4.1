@@ -6,6 +6,7 @@ import { NovaNota } from './components/NovaNota';
 import { NotaView } from './components/NotaView';
 import { Historico } from './components/Historico';
 import { Toaster } from './components/ui/sonner';
+import { Footer } from './components/Footer';
 
 function AppContent() {
   const [currentPage, setCurrentPage] = useState('dashboard');
@@ -44,8 +45,11 @@ function AppContent() {
   };
 
   return (
-    <div className="size-full">
-      {renderPage()}
+    <div className="flex flex-col h-screen">
+      <div className="flex-1 overflow-y-auto">
+        {renderPage()}
+      </div>
+      <Footer />
       <Toaster />
     </div>
   );
