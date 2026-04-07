@@ -1,21 +1,41 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
-  <rect width="512" height="512" rx="80" fill="#6b7280"/>
-  <!-- Corpo do carro -->
-  <rect x="56" y="230" width="400" height="140" rx="20" fill="#4a2c1a"/>
-  <!-- Cabine -->
-  <path d="M130 230 L170 130 L342 130 L382 230 Z" fill="#4a2c1a"/>
+  <!-- Fundo laranja pastel retrô, cantos arredondados estilo ícone mobile -->
+  <rect width="512" height="512" rx="112" fill="#E8956D"/>
+
+  <!-- Corpo principal do carro -->
+  <rect x="60" y="240" width="392" height="130" rx="18" fill="#1a1a1a"/>
+
+  <!-- Cabine (teto) -->
+  <path d="M135 240 L178 148 L334 148 L377 240 Z" fill="#1a1a1a"/>
+
   <!-- Janela cabine -->
-  <path d="M185 220 L210 145 L302 145 L327 220 Z" fill="#1a1a2e" opacity="0.5"/>
+  <path d="M192 228 L218 158 L294 158 L320 228 Z" fill="#c8a882" opacity="0.35"/>
+
+  <!-- Para-brisa divisor -->
+  <rect x="252" y="158" width="8" height="70" rx="4" fill="#1a1a1a"/>
+
   <!-- Roda esquerda -->
-  <circle cx="150" cy="370" r="60" fill="#1c1c1c"/>
-  <circle cx="150" cy="370" r="28" fill="#3a3a3a"/>
+  <circle cx="152" cy="370" r="58" fill="#111111"/>
+  <circle cx="152" cy="370" r="26" fill="#2a2a2a"/>
+  <circle cx="152" cy="370" r="10" fill="#111111"/>
+
   <!-- Roda direita -->
-  <circle cx="362" cy="370" r="60" fill="#1c1c1c"/>
-  <circle cx="362" cy="370" r="28" fill="#3a3a3a"/>
-  <!-- Farol frente -->
-  <rect x="56" y="262" width="50" height="30" rx="8" fill="#fff9c4"/>
+  <circle cx="360" cy="370" r="58" fill="#111111"/>
+  <circle cx="360" cy="370" r="26" fill="#2a2a2a"/>
+  <circle cx="360" cy="370" r="10" fill="#111111"/>
+
+  <!-- Friso lateral -->
+  <rect x="60" y="298" width="392" height="7" rx="3" fill="#0a0a0a" opacity="0.5"/>
+
+  <!-- Farol dianteiro -->
+  <rect x="62" y="264" width="48" height="26" rx="7" fill="#fff3c4" opacity="0.9"/>
+
   <!-- Farol traseiro -->
-  <rect x="406" y="262" width="50" height="30" rx="8" fill="#ff5252"/>
-  <!-- Linha lateral -->
-  <rect x="56" y="295" width="400" height="8" rx="4" fill="#2d1a0e" opacity="0.6"/>
+  <rect x="402" y="264" width="48" height="26" rx="7" fill="#cc3333" opacity="0.85"/>
+
+  <!-- Porta esquerda -->
+  <rect x="168" y="250" width="5" height="100" rx="2" fill="#0a0a0a" opacity="0.4"/>
+
+  <!-- Porta direita -->
+  <rect x="339" y="250" width="5" height="100" rx="2" fill="#0a0a0a" opacity="0.4"/>
 </svg>
