@@ -9,31 +9,38 @@ import { Toaster } from './components/ui/sonner';
 
 function AppContent() {
   const [currentPage, setCurrentPage] = useState('dashboard');
+  const [previousPage, setPreviousPage] = useState('dashboard');
   const { notas } = useData();
+
+  const navigate = (page: string) => {
+    setPreviousPage(currentPage);
+    setCurrentPage(page);
+  };
 
   const renderPage = () => {
     if (currentPage === 'dashboard') {
-      return <Dashboard onNavigate={setCurrentPage} />;
+      return <Dashboard onNavigate={navigate} />;
     }
     if (currentPage === 'clientes') {
-      return <Clientes onNavigate={setCurrentPage} />;
+      return <Clientes onNavigate={navigate} />;
     }
     if (currentPage === 'nova-nota') {
-      return <NovaNota onNavigate={setCurrentPage} />;
+      return <NovaNota onNavigate={navigate} />;
     }
     if (currentPage === 'historico') {
-      return <Historico onNavigate={setCurrentPage} />;
+      return <Historico onNavigate={navigate} />;
     }
     if (currentPage.startsWith('editar-nota-')) {
       const notaId = currentPage.replace('editar-nota-', '');
       const nota = notas.find(n => n.id === notaId);
-      return <NovaNota onNavigate={setCurrentPage} notaParaEditar={nota} />;
+      return <NovaNota onNavigate={navigate} notaParaEditar={nota} />;
     }
     if (currentPage.startsWith('nota-')) {
       const notaId = currentPage.replace('nota-', '');
-      return <NotaView notaId={notaId} onNavigate={setCurrentPage} />;
+      const backTo = previousPage === 'dashboard' ? 'dashboard' : 'historico';
+      return <NotaView notaId={notaId} onNavigate={navigate} backTo={backTo} />;
     }
-    return <Dashboard onNavigate={setCurrentPage} />;
+    return <Dashboard onNavigate={navigate} />;
   };
 
   return (

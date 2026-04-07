@@ -1,8 +1,7 @@
 import { useState } from 'react';
-import { ArrowLeft, Plus, Trash2, Edit2, Car } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Edit2, Car, Users, ChevronRight } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { Button } from './ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from './ui/dialog';
@@ -13,7 +12,7 @@ interface ClientesProps {
 }
 
 export function Clientes({ onNavigate }: ClientesProps) {
-  const { clientes, addCliente, updateCliente, deleteCliente, veiculos, addVeiculo, deleteVeiculo, getVeiculosByClienteId } = useData();
+  const { clientes, addCliente, updateCliente, deleteCliente, addVeiculo, deleteVeiculo, getVeiculosByClienteId } = useData();
   const [selectedCliente, setSelectedCliente] = useState<Cliente | null>(null);
   const [isClienteDialogOpen, setIsClienteDialogOpen] = useState(false);
   const [isVeiculoDialogOpen, setIsVeiculoDialogOpen] = useState(false);
@@ -75,220 +74,203 @@ export function Clientes({ onNavigate }: ClientesProps) {
 
   const clienteVeiculos = selectedCliente ? getVeiculosByClienteId(selectedCliente.id) : [];
 
-  return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        <div className="mb-6 flex items-center gap-4">
-          <Button variant="outline" onClick={() => onNavigate('dashboard')}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Voltar
-          </Button>
-          <h1 className="text-3xl">Gerenciar Clientes</h1>
+  // If a client is selected, show their vehicles (mobile drill-down)
+  if (selectedCliente) {
+    return (
+      <div className="min-h-screen bg-[#f5f6f8]">
+        {/* Header */}
+        <div className="bg-white border-b border-gray-100 px-4 py-4 sticky top-0 z-10 shadow-sm">
+          <div className="max-w-2xl mx-auto flex items-center gap-3">
+            <button
+              onClick={() => setSelectedCliente(null)}
+              className="p-2 -ml-2 rounded-xl hover:bg-gray-100 transition-colors"
+            >
+              <ArrowLeft className="h-5 w-5 text-gray-700" />
+            </button>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-base font-semibold text-gray-900 truncate">{selectedCliente.nome}</h1>
+              <p className="text-xs text-gray-500">{selectedCliente.telefone}</p>
+            </div>
+            <Dialog open={isVeiculoDialogOpen} onOpenChange={setIsVeiculoDialogOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm" className="rounded-xl shrink-0">
+                  <Plus className="h-4 w-4 mr-1" />
+                  Veículo
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Novo Veículo</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="marca">Marca</Label>
+                    <Input id="marca" value={veiculoForm.marca} onChange={(e) => setVeiculoForm({ ...veiculoForm, marca: e.target.value })} placeholder="Ex: Volkswagen" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="modelo">Modelo</Label>
+                    <Input id="modelo" value={veiculoForm.modelo} onChange={(e) => setVeiculoForm({ ...veiculoForm, modelo: e.target.value })} placeholder="Ex: Gol" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="placa">Placa</Label>
+                    <Input id="placa" value={veiculoForm.placa} onChange={(e) => setVeiculoForm({ ...veiculoForm, placa: e.target.value.toUpperCase() })} placeholder="ABC-1234" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="ano">Ano (opcional)</Label>
+                    <Input id="ano" value={veiculoForm.ano} onChange={(e) => setVeiculoForm({ ...veiculoForm, ano: e.target.value })} placeholder="2020" />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button onClick={handleAddVeiculo}>Adicionar</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Clientes</CardTitle>
-              <Dialog open={isClienteDialogOpen} onOpenChange={(open) => {
-                setIsClienteDialogOpen(open);
-                if (!open) {
-                  setEditingCliente(null);
-                  setClienteForm({ nome: '', telefone: '' });
-                }
-              }}>
-                <DialogTrigger asChild>
-                  <Button size="sm">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Novo Cliente
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>{editingCliente ? 'Editar Cliente' : 'Novo Cliente'}</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4 py-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="nome">Nome</Label>
-                      <Input
-                        id="nome"
-                        value={clienteForm.nome}
-                        onChange={(e) => setClienteForm({ ...clienteForm, nome: e.target.value })}
-                        placeholder="Nome do cliente"
-                      />
+        <div className="max-w-2xl mx-auto px-4 py-5">
+          {clienteVeiculos.length === 0 ? (
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 py-12 flex flex-col items-center gap-2 text-gray-400">
+              <Car className="h-8 w-8 opacity-40" />
+              <p className="text-sm">Nenhum veículo cadastrado</p>
+            </div>
+          ) : (
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden divide-y divide-gray-50">
+              {clienteVeiculos.map((veiculo) => (
+                <div key={veiculo.id} className="flex items-center justify-between px-4 py-4">
+                  <div className="flex items-center gap-3">
+                    <div className="bg-[#e6eff5] rounded-xl p-2">
+                      <Car className="h-5 w-5 text-[#6b9ab8]" />
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="telefone">Telefone</Label>
-                      <Input
-                        id="telefone"
-                        value={clienteForm.telefone}
-                        onChange={(e) => setClienteForm({ ...clienteForm, telefone: e.target.value })}
-                        placeholder="(00) 00000-0000"
-                      />
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">{veiculo.marca} {veiculo.modelo}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        {veiculo.placa}{veiculo.ano && ` · ${veiculo.ano}`}
+                      </p>
                     </div>
                   </div>
-                  <DialogFooter>
-                    <Button onClick={handleAddCliente}>
-                      {editingCliente ? 'Salvar' : 'Adicionar'}
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </CardHeader>
-            <CardContent>
-              {clientes.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">Nenhum cliente cadastrado</p>
-              ) : (
-                <div className="space-y-2">
-                  {clientes.map((cliente) => (
-                    <div
-                      key={cliente.id}
-                      className={`p-4 border rounded-lg cursor-pointer transition ${
-                        selectedCliente?.id === cliente.id ? 'bg-blue-50 border-blue-300' : 'hover:bg-gray-50'
-                      }`}
-                      onClick={() => setSelectedCliente(cliente)}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p>{cliente.nome}</p>
-                          <p className="text-sm text-gray-600">{cliente.telefone}</p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            {getVeiculosByClienteId(cliente.id).length} veículo(s)
-                          </p>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleEditCliente(cliente);
-                            }}
-                          >
-                            <Edit2 className="h-4 w-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteCliente(cliente.id);
-                            }}
-                          >
-                            <Trash2 className="h-4 w-4 text-red-600" />
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-red-500 hover:text-red-700 hover:bg-red-50 rounded-xl"
+                    onClick={() => {
+                      if (confirm('Tem certeza que deseja excluir este veículo?')) {
+                        deleteVeiculo(veiculo.id);
+                      }
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>
-                {selectedCliente ? `Veículos de ${selectedCliente.nome}` : 'Veículos'}
-              </CardTitle>
-              {selectedCliente && (
-                <Dialog open={isVeiculoDialogOpen} onOpenChange={setIsVeiculoDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button size="sm">
-                      <Plus className="mr-2 h-4 w-4" />
-                      Novo Veículo
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Novo Veículo</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4 py-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="marca">Marca</Label>
-                        <Input
-                          id="marca"
-                          value={veiculoForm.marca}
-                          onChange={(e) => setVeiculoForm({ ...veiculoForm, marca: e.target.value })}
-                          placeholder="Ex: Volkswagen"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="modelo">Modelo</Label>
-                        <Input
-                          id="modelo"
-                          value={veiculoForm.modelo}
-                          onChange={(e) => setVeiculoForm({ ...veiculoForm, modelo: e.target.value })}
-                          placeholder="Ex: Gol"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="placa">Placa</Label>
-                        <Input
-                          id="placa"
-                          value={veiculoForm.placa}
-                          onChange={(e) => setVeiculoForm({ ...veiculoForm, placa: e.target.value.toUpperCase() })}
-                          placeholder="ABC-1234"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="ano">Ano (opcional)</Label>
-                        <Input
-                          id="ano"
-                          value={veiculoForm.ano}
-                          onChange={(e) => setVeiculoForm({ ...veiculoForm, ano: e.target.value })}
-                          placeholder="2020"
-                        />
-                      </div>
-                    </div>
-                    <DialogFooter>
-                      <Button onClick={handleAddVeiculo}>Adicionar</Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              )}
-            </CardHeader>
-            <CardContent>
-              {!selectedCliente ? (
-                <p className="text-gray-500 text-center py-8">Selecione um cliente para ver seus veículos</p>
-              ) : clienteVeiculos.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">Nenhum veículo cadastrado</p>
-              ) : (
-                <div className="space-y-2">
-                  {clienteVeiculos.map((veiculo) => (
-                    <div
-                      key={veiculo.id}
-                      className="p-4 border rounded-lg hover:bg-gray-50"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <Car className="h-8 w-8 text-gray-400" />
-                          <div>
-                            <p>{veiculo.marca} {veiculo.modelo}</p>
-                            <p className="text-sm text-gray-600">
-                              {veiculo.placa} {veiculo.ano && `• ${veiculo.ano}`}
-                            </p>
-                          </div>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => {
-                            if (confirm('Tem certeza que deseja excluir este veículo?')) {
-                              deleteVeiculo(veiculo.id);
-                            }
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4 text-red-600" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+              ))}
+            </div>
+          )}
         </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[#f5f6f8]">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-100 px-4 py-4 sticky top-0 z-10 shadow-sm">
+        <div className="max-w-2xl mx-auto flex items-center gap-3">
+          <button
+            onClick={() => onNavigate('dashboard')}
+            className="p-2 -ml-2 rounded-xl hover:bg-gray-100 transition-colors"
+          >
+            <ArrowLeft className="h-5 w-5 text-gray-700" />
+          </button>
+          <h1 className="flex-1 text-base font-semibold text-gray-900">Clientes</h1>
+          <Dialog open={isClienteDialogOpen} onOpenChange={(open) => {
+            setIsClienteDialogOpen(open);
+            if (!open) {
+              setEditingCliente(null);
+              setClienteForm({ nome: '', telefone: '' });
+            }
+          }}>
+            <DialogTrigger asChild>
+              <Button size="sm" className="rounded-xl">
+                <Plus className="h-4 w-4 mr-1" />
+                Novo
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>{editingCliente ? 'Editar Cliente' : 'Novo Cliente'}</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="nome">Nome</Label>
+                  <Input id="nome" value={clienteForm.nome} onChange={(e) => setClienteForm({ ...clienteForm, nome: e.target.value })} placeholder="Nome do cliente" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="telefone">Telefone</Label>
+                  <Input id="telefone" value={clienteForm.telefone} onChange={(e) => setClienteForm({ ...clienteForm, telefone: e.target.value })} placeholder="(00) 00000-0000" />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button onClick={handleAddCliente}>{editingCliente ? 'Salvar' : 'Adicionar'}</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
+
+      <div className="max-w-2xl mx-auto px-4 py-5">
+        {clientes.length === 0 ? (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 py-12 flex flex-col items-center gap-2 text-gray-400">
+            <Users className="h-8 w-8 opacity-40" />
+            <p className="text-sm">Nenhum cliente cadastrado</p>
+          </div>
+        ) : (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden divide-y divide-gray-50">
+            {clientes.map((cliente) => (
+              <button
+                key={cliente.id}
+                className="w-full flex items-center justify-between px-4 py-4 hover:bg-gray-50 active:bg-gray-100 transition-colors text-left"
+                onClick={() => setSelectedCliente(cliente)}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="bg-[#e6eff5] rounded-xl p-2 shrink-0">
+                    <Users className="h-5 w-5 text-[#6b9ab8]" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">{cliente.nome}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {cliente.telefone} · {getVeiculosByClienteId(cliente.id).length} veículo(s)
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 shrink-0 ml-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-xl"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEditCliente(cliente);
+                    }}
+                  >
+                    <Edit2 className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-red-400 hover:text-red-700 hover:bg-red-50 rounded-xl"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteCliente(cliente.id);
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                  <ChevronRight className="h-4 w-4 text-gray-300 ml-1" />
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

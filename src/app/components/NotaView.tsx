@@ -2,7 +2,6 @@ import { useState } from "react";
 import { ArrowLeft, MessageCircle, Trash2, Pencil, CheckCircle, Clock } from "lucide-react";
 import { useData } from "../context/DataContext";
 import { Button } from "./ui/button";
-import { Card } from "./ui/card";
 import { Badge } from "./ui/badge";
 import {
   AlertDialog,
@@ -22,9 +21,10 @@ import logoImage from "../../assets/7188601ef5c7fc783e87deb6439d04e88e0319a4.png
 interface NotaViewProps {
   notaId: string;
   onNavigate: (page: string) => void;
+  backTo?: string;
 }
 
-export function NotaView({ notaId, onNavigate }: NotaViewProps) {
+export function NotaView({ notaId, onNavigate, backTo = 'historico' }: NotaViewProps) {
   const { notas, getClienteById, getVeiculoById, deleteNota, updateNota } = useData();
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
@@ -34,14 +34,12 @@ export function NotaView({ notaId, onNavigate }: NotaViewProps) {
 
   if (!nota) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
-        <div className="max-w-4xl mx-auto">
-          <Button variant="outline" onClick={() => onNavigate("dashboard")}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Voltar
-          </Button>
-          <p className="text-center mt-8">Nota não encontrada</p>
-        </div>
+      <div className="min-h-screen bg-[#f5f6f8] p-4">
+        <Button variant="outline" onClick={() => onNavigate("dashboard")} className="rounded-xl">
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Voltar
+        </Button>
+        <p className="text-center mt-8 text-gray-500">Nota não encontrada</p>
       </div>
     );
   }
@@ -115,175 +113,156 @@ export function NotaView({ notaId, onNavigate }: NotaViewProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-4xl mx-auto">
-        <div className="mb-6 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Button variant="outline" onClick={() => onNavigate("historico")}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Voltar
-            </Button>
-            <h1 className="text-2xl">Nota de Serviço #{nota.numero}</h1>
+    <div className="min-h-screen bg-[#f5f6f8]">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-100 px-4 py-4 sticky top-0 z-10 shadow-sm">
+        <div className="max-w-2xl mx-auto flex items-center gap-3">
+          <button
+            onClick={() => onNavigate(backTo)}
+            className="p-2 -ml-2 rounded-xl hover:bg-gray-100 transition-colors"
+          >
+            <ArrowLeft className="h-5 w-5 text-gray-700" />
+          </button>
+          <div className="flex-1 flex items-center gap-2 min-w-0">
+            <h1 className="text-base font-semibold text-gray-900 shrink-0">Nota #{nota.numero}</h1>
             {nota.status === 'pago' ? (
-              <Badge className="bg-green-100 text-green-800 border-green-200">
+              <Badge className="bg-emerald-50 text-emerald-700 border-emerald-100 shrink-0">
                 <CheckCircle className="mr-1 h-3 w-3" />
                 Pago
               </Badge>
             ) : (
-              <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">
+              <Badge className="bg-amber-50 text-amber-700 border-amber-100 shrink-0">
                 <Clock className="mr-1 h-3 w-3" />
                 Pendente
               </Badge>
             )}
           </div>
+        </div>
+      </div>
 
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              onClick={handleToggleStatus}
-              className={nota.status === 'pago'
-                ? 'border-yellow-300 text-yellow-700 hover:bg-yellow-50'
-                : 'border-green-300 text-green-700 hover:bg-green-50'
-              }
-            >
-              {nota.status === 'pago' ? (
-                <>
-                  <Clock className="mr-2 h-4 w-4" />
-                  Marcar Pendente
-                </>
-              ) : (
-                <>
-                  <CheckCircle className="mr-2 h-4 w-4" />
-                  Marcar como Pago
-                </>
-              )}
-            </Button>
+      <div className="max-w-2xl mx-auto px-4 py-5 space-y-4 pb-4">
+        {/* Action buttons */}
+        <div className="grid grid-cols-2 gap-2">
+          <Button
+            onClick={handleBaixarEEnviar}
+            disabled={isGeneratingPdf}
+            className="rounded-2xl h-12 bg-[#6b9ab8] hover:bg-[#5a87a3] text-white font-medium"
+          >
+            <MessageCircle className="mr-2 h-4 w-4" />
+            {isGeneratingPdf ? "Gerando..." : "Enviar WhatsApp"}
+          </Button>
 
-            <Button variant="outline" onClick={() => onNavigate(`editar-nota-${nota.id}`)}>
-              <Pencil className="mr-2 h-4 w-4" />
-              Editar
-            </Button>
+          <Button
+            variant="outline"
+            onClick={handleToggleStatus}
+            className={`rounded-2xl h-12 font-medium ${
+              nota.status === 'pago'
+                ? 'border-amber-200 text-amber-700 hover:bg-amber-50'
+                : 'border-emerald-200 text-emerald-700 hover:bg-emerald-50'
+            }`}
+          >
+            {nota.status === 'pago' ? (
+              <><Clock className="mr-2 h-4 w-4" />Pendente</>
+            ) : (
+              <><CheckCircle className="mr-2 h-4 w-4" />Marcar Pago</>
+            )}
+          </Button>
 
-            <Button onClick={handleBaixarEEnviar} disabled={isGeneratingPdf}>
-              <MessageCircle className="mr-2 h-4 w-4" />
-              {isGeneratingPdf ? "Gerando..." : "Enviar no WhatsApp"}
-            </Button>
+          <Button
+            variant="outline"
+            onClick={() => onNavigate(`editar-nota-${nota.id}`)}
+            className="rounded-2xl h-12 border-gray-200 text-gray-700 font-medium"
+          >
+            <Pencil className="mr-2 h-4 w-4" />
+            Editar
+          </Button>
 
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive">
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Deletar
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Deletar nota #{nota.numero}?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Esta ação não pode ser desfeita. A nota será removida permanentemente.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDeletarNota}>
-                    Sim, deletar
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          </div>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline" className="rounded-2xl h-12 border-red-200 text-red-600 hover:bg-red-50 font-medium">
+                <Trash2 className="mr-2 h-4 w-4" />
+                Deletar
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Deletar nota #{nota.numero}?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Esta ação não pode ser desfeita. A nota será removida permanentemente.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDeletarNota}>Sim, deletar</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
 
-        <Card>
-          <div className="bg-white p-8">
+        {/* Nota document */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="p-5">
             {/* Cabeçalho */}
-            <div className="flex items-center justify-between mb-8 pb-6 border-b">
-              <div className="flex items-center gap-4">
-                <img src={logoImage} alt="Logo" className="h-14" />
+            <div className="flex items-start justify-between mb-6 pb-5 border-b border-gray-100">
+              <div className="flex items-center gap-3">
+                <img src={logoImage} alt="Logo" className="h-12 w-auto" />
                 <div>
-                  <h1 className="text-2xl">Oficina mecânica 4.1</h1>
-                  <p className="text-sm text-gray-600">Telefone: (11) 99733-0664</p>
-                  <p className="text-sm text-gray-600">
-                    Rua Carlos Drummond de Andrade n30, Jardim Santa Maria
-                  </p>
+                  <h2 className="text-sm font-semibold text-gray-900">Oficina mecânica 4.1</h2>
+                  <p className="text-xs text-gray-500 mt-0.5">(11) 99733-0664</p>
+                  <p className="text-xs text-gray-500">R. Carlos Drummond de Andrade, 30</p>
                 </div>
               </div>
-              <div className="text-right">
-                <p className="text-sm text-gray-600">Nota de Serviço</p>
-                <p className="text-xl font-semibold">#{nota.numero}</p>
-                <p className="text-sm text-gray-600">
+              <div className="text-right shrink-0 ml-2">
+                <p className="text-xs text-gray-400">Nota de Serviço</p>
+                <p className="text-lg font-bold text-gray-900">#{nota.numero}</p>
+                <p className="text-xs text-gray-500">
                   {new Date(nota.data).toLocaleDateString("pt-BR")}
                 </p>
               </div>
             </div>
 
             {/* Cliente / Veículo */}
-            <div className="grid grid-cols-2 gap-8 mb-8 pb-6 border-b">
+            <div className="grid grid-cols-2 gap-4 mb-6 pb-5 border-b border-gray-100">
               <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Cliente</p>
-                <p className="text-lg font-medium">{cliente?.nome}</p>
-                <p className="text-sm text-gray-600">{cliente?.telefone}</p>
+                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Cliente</p>
+                <p className="text-sm font-semibold text-gray-900">{cliente?.nome}</p>
+                <p className="text-xs text-gray-500 mt-0.5">{cliente?.telefone}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Veículo</p>
-                <p className="text-lg font-medium">
-                  {veiculo?.marca} {veiculo?.modelo}
-                </p>
-                <p className="text-sm text-gray-600">Placa: {veiculo?.placa}</p>
-                {veiculo?.ano && (
-                  <p className="text-sm text-gray-600">Ano: {veiculo.ano}</p>
-                )}
+                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Veículo</p>
+                <p className="text-sm font-semibold text-gray-900">{veiculo?.marca} {veiculo?.modelo}</p>
+                <p className="text-xs text-gray-500 mt-0.5">{veiculo?.placa}{veiculo?.ano && ` · ${veiculo.ano}`}</p>
               </div>
             </div>
 
             {/* Serviços */}
-            <div className="mb-8">
-              <p className="text-xs text-gray-500 uppercase tracking-wide mb-3">
-                Serviços Realizados
-              </p>
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left py-2 text-xs text-gray-500 uppercase tracking-wide">
-                      Serviço
-                    </th>
-                    <th className="text-right py-2 text-xs text-gray-500 uppercase tracking-wide">
-                      Valor
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {nota.servicos.map((servico) => (
-                    <tr key={servico.id} className="border-b">
-                      <td className="py-3">{servico.nome}</td>
-                      <td className="text-right py-3">
-                        R$ {servico.valor.toFixed(2)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="mb-6">
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-3">Serviços Realizados</p>
+              <div className="space-y-2">
+                {nota.servicos.map((servico) => (
+                  <div key={servico.id} className="flex items-center justify-between py-2 border-b border-gray-50">
+                    <span className="text-sm text-gray-700">{servico.nome}</span>
+                    <span className="text-sm font-medium text-gray-900">R$ {servico.valor.toFixed(2)}</span>
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* Total */}
-            <div className="flex justify-between items-center mb-8 pb-6 border-b">
-              <span className="text-lg">Total</span>
-              <span className="text-3xl font-bold">
-                R$ {nota.total.toFixed(2)}
-              </span>
+            <div className="flex justify-between items-center mb-5 pb-5 border-b border-gray-100">
+              <span className="text-sm font-medium text-gray-600">Total</span>
+              <span className="text-2xl font-bold text-gray-900">R$ {nota.total.toFixed(2)}</span>
             </div>
 
             {/* Observações */}
             {nota.observacoes && (
               <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">
-                  Observações
-                </p>
-                <p className="text-sm text-gray-700">{nota.observacoes}</p>
+                <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Observações</p>
+                <p className="text-sm text-gray-600">{nota.observacoes}</p>
               </div>
             )}
           </div>
-        </Card>
+        </div>
       </div>
     </div>
   );

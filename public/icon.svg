@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="80" fill="#6b7280"/>
+  <!-- Corpo do carro -->
+  <rect x="56" y="230" width="400" height="140" rx="20" fill="#4a2c1a"/>
+  <!-- Cabine -->
+  <path d="M130 230 L170 130 L342 130 L382 230 Z" fill="#4a2c1a"/>
+  <!-- Janela cabine -->
+  <path d="M185 220 L210 145 L302 145 L327 220 Z" fill="#1a1a2e" opacity="0.5"/>
+  <!-- Roda esquerda -->
+  <circle cx="150" cy="370" r="60" fill="#1c1c1c"/>
+  <circle cx="150" cy="370" r="28" fill="#3a3a3a"/>
+  <!-- Roda direita -->
+  <circle cx="362" cy="370" r="60" fill="#1c1c1c"/>
+  <circle cx="362" cy="370" r="28" fill="#3a3a3a"/>
+  <!-- Farol frente -->
+  <rect x="56" y="262" width="50" height="30" rx="8" fill="#fff9c4"/>
+  <!-- Farol traseiro -->
+  <rect x="406" y="262" width="50" height="30" rx="8" fill="#ff5252"/>
+  <!-- Linha lateral -->
+  <rect x="56" y="295" width="400" height="8" rx="4" fill="#2d1a0e" opacity="0.6"/>
+</svg>

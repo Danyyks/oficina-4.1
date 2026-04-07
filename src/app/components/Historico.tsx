@@ -1,8 +1,6 @@
-import { ArrowLeft, FileText } from 'lucide-react';
+import { ArrowLeft, FileText, Clock, CheckCircle } from 'lucide-react';
 import { useData } from '../context/DataContext';
-import { Button } from './ui/button';
 import { Badge } from './ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 
 interface HistoricoProps {
   onNavigate: (page: string) => void;
@@ -12,69 +10,77 @@ export function Historico({ onNavigate }: HistoricoProps) {
   const { notas, getClienteById, getVeiculoById } = useData();
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-6xl mx-auto">
-        <div className="mb-6 flex items-center gap-4">
-          <Button variant="outline" onClick={() => onNavigate('dashboard')}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Voltar
-          </Button>
-          <h1 className="text-3xl">Histórico de Notas</h1>
-        </div>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Todas as Notas de Serviço</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {notas.length === 0 ? (
-              <p className="text-gray-500 text-center py-8">Nenhuma nota criada ainda</p>
-            ) : (
-              <div className="space-y-2">
-                {notas.map((nota) => {
-                  const cliente = getClienteById(nota.clienteId);
-                  const veiculo = getVeiculoById(nota.veiculoId);
-
-                  return (
-                    <div
-                      key={nota.id}
-                      className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer transition"
-                      onClick={() => onNavigate(`nota-${nota.id}`)}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <FileText className="h-8 w-8 text-gray-400" />
-                          <div>
-                            <p>
-                              <span>Nota #{nota.numero}</span>
-                              <span className="text-gray-500 mx-2">•</span>
-                              <span className="text-gray-600">{cliente?.nome}</span>
-                            </p>
-                            <p className="text-sm text-gray-600">
-                              {veiculo?.marca} {veiculo?.modelo} - {veiculo?.placa}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {new Date(nota.data).toLocaleDateString('pt-BR')} às {new Date(nota.data).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="text-right flex flex-col items-end gap-1">
-                          <p className="text-xl">R$ {nota.total.toFixed(2)}</p>
-                          <p className="text-sm text-gray-600">{nota.servicos.length} serviço(s)</p>
-                          {nota.status === 'pago' ? (
-                            <Badge className="bg-green-100 text-green-800 border-green-200">Pago</Badge>
-                          ) : (
-                            <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">Pendente</Badge>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+    <div className="min-h-screen bg-[#f5f6f8]">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-100 px-4 py-4 sticky top-0 z-10 shadow-sm">
+        <div className="max-w-2xl mx-auto flex items-center gap-3">
+          <button
+            onClick={() => onNavigate('dashboard')}
+            className="p-2 -ml-2 rounded-xl hover:bg-gray-100 transition-colors"
+          >
+            <ArrowLeft className="h-5 w-5 text-gray-700" />
+          </button>
+          <div className="flex-1">
+            <h1 className="text-base font-semibold text-gray-900">Histórico de Notas</h1>
+            {notas.length > 0 && (
+              <p className="text-xs text-gray-500">{notas.length} nota(s) no total</p>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-2xl mx-auto px-4 py-5">
+        {notas.length === 0 ? (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 py-14 flex flex-col items-center gap-2 text-gray-400">
+            <FileText className="h-10 w-10 opacity-30" />
+            <p className="text-sm">Nenhuma nota criada ainda</p>
+          </div>
+        ) : (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden divide-y divide-gray-50">
+            {notas.map((nota) => {
+              const cliente = getClienteById(nota.clienteId);
+              const veiculo = getVeiculoById(nota.veiculoId);
+
+              return (
+                <button
+                  key={nota.id}
+                  className="w-full flex items-start justify-between px-4 py-4 hover:bg-gray-50 active:bg-gray-100 transition-colors text-left"
+                  onClick={() => onNavigate(`nota-${nota.id}`)}
+                >
+                  <div className="flex items-start gap-3 min-w-0">
+                    <div className={`rounded-xl p-2 shrink-0 mt-0.5 ${nota.status === 'pago' ? 'bg-emerald-50' : 'bg-amber-50'}`}>
+                      {nota.status === 'pago'
+                        ? <CheckCircle className="h-4 w-4 text-emerald-600" />
+                        : <Clock className="h-4 w-4 text-amber-600" />
+                      }
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-sm font-semibold text-gray-900">#{nota.numero}</span>
+                        <span className="text-sm text-gray-700 truncate">{cliente?.nome ?? '—'}</span>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-0.5 truncate">
+                        {veiculo?.marca} {veiculo?.modelo} · {veiculo?.placa}
+                      </p>
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        {new Date(nota.data).toLocaleDateString('pt-BR')} às {new Date(nota.data).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end gap-1.5 shrink-0 ml-3">
+                    <span className="text-sm font-bold text-gray-900">R$ {nota.total.toFixed(2)}</span>
+                    <span className="text-xs text-gray-400">{nota.servicos.length} serviço(s)</span>
+                    {nota.status === 'pago' ? (
+                      <Badge className="bg-emerald-50 text-emerald-700 border-emerald-100 text-[10px] px-1.5 py-0 h-auto">Pago</Badge>
+                    ) : (
+                      <Badge className="bg-amber-50 text-amber-700 border-amber-100 text-[10px] px-1.5 py-0 h-auto">Pendente</Badge>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

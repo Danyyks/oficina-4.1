@@ -74,8 +74,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
   };
 
   const deleteCliente = (id: string) => {
+    const veiculosDoCliente = veiculos.filter(v => v.clienteId === id).map(v => v.id);
     setClientes(prev => prev.filter(c => c.id !== id));
     setVeiculos(prev => prev.filter(v => v.clienteId !== id));
+    setNotas(prev => prev.filter(n => n.clienteId !== id && !veiculosDoCliente.includes(n.veiculoId)));
   };
 
   const addVeiculo = (veiculo: Veiculo) => {
@@ -88,6 +90,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const deleteVeiculo = (id: string) => {
     setVeiculos(prev => prev.filter(v => v.id !== id));
+    setNotas(prev => prev.filter(n => n.veiculoId !== id));
   };
 
   const addNota = (nota: NotaServico) => {
