@@ -1,10 +1,11 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { Cliente, Veiculo, NotaServico } from '../types';
+import { Cliente, Veiculo, NotaServico, Orcamento } from '../types';
 
 interface DataContextType {
   clientes: Cliente[];
   veiculos: Veiculo[];
   notas: NotaServico[];
+  orcamentos: Orcamento[];
   addCliente: (cliente: Cliente) => void;
   updateCliente: (id: string, cliente: Partial<Cliente>) => void;
   deleteCliente: (id: string) => void;
@@ -15,6 +16,10 @@ interface DataContextType {
   updateNota: (id: string, nota: Partial<NotaServico>) => void;
   deleteNota: (id: string) => void;
   nextNumeroNota: () => string;
+  addOrcamento: (orcamento: Orcamento) => void;
+  updateOrcamento: (id: string, orcamento: Partial<Orcamento>) => void;
+  deleteOrcamento: (id: string) => void;
+  nextNumeroOrcamento: () => string;
   getClienteById: (id: string) => Cliente | undefined;
   getVeiculoById: (id: string) => Veiculo | undefined;
   getVeiculosByClienteId: (clienteId: string) => Veiculo[];
@@ -43,6 +48,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
     return saved ? parseInt(saved, 10) : 0;
   });
 
+  const [orcamentos, setOrcamentos] = useState<Orcamento[]>(() => {
+    const saved = localStorage.getItem('orcamentos');
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [orcamentoCounter, setOrcamentoCounter] = useState<number>(() => {
+    const saved = localStorage.getItem('orcamentoCounter');
+    return saved ? parseInt(saved, 10) : 0;
+  });
+
   useEffect(() => {
     localStorage.setItem('clientes', JSON.stringify(clientes));
   }, [clientes]);
@@ -59,9 +74,23 @@ export function DataProvider({ children }: { children: ReactNode }) {
     localStorage.setItem('notaCounter', notaCounter.toString());
   }, [notaCounter]);
 
+  useEffect(() => {
+    localStorage.setItem('orcamentos', JSON.stringify(orcamentos));
+  }, [orcamentos]);
+
+  useEffect(() => {
+    localStorage.setItem('orcamentoCounter', orcamentoCounter.toString());
+  }, [orcamentoCounter]);
+
   const nextNumeroNota = (): string => {
     const next = notaCounter + 1;
     setNotaCounter(next);
+    return next.toString().padStart(4, '0');
+  };
+
+  const nextNumeroOrcamento = (): string => {
+    const next = orcamentoCounter + 1;
+    setOrcamentoCounter(next);
     return next.toString().padStart(4, '0');
   };
 
@@ -78,6 +107,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setClientes(prev => prev.filter(c => c.id !== id));
     setVeiculos(prev => prev.filter(v => v.clienteId !== id));
     setNotas(prev => prev.filter(n => n.clienteId !== id && !veiculosDoCliente.includes(n.veiculoId)));
+    setOrcamentos(prev => prev.filter(o => o.clienteId !== id && !veiculosDoCliente.includes(o.veiculoId)));
   };
 
   const addVeiculo = (veiculo: Veiculo) => {
@@ -91,6 +121,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const deleteVeiculo = (id: string) => {
     setVeiculos(prev => prev.filter(v => v.id !== id));
     setNotas(prev => prev.filter(n => n.veiculoId !== id));
+    setOrcamentos(prev => prev.filter(o => o.veiculoId !== id));
   };
 
   const addNota = (nota: NotaServico) => {
@@ -103,6 +134,18 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const deleteNota = (id: string) => {
     setNotas(prev => prev.filter(n => n.id !== id));
+  };
+
+  const addOrcamento = (orcamento: Orcamento) => {
+    setOrcamentos(prev => [orcamento, ...prev]);
+  };
+
+  const updateOrcamento = (id: string, orcamentoUpdate: Partial<Orcamento>) => {
+    setOrcamentos(prev => prev.map(o => o.id === id ? { ...o, ...orcamentoUpdate } : o));
+  };
+
+  const deleteOrcamento = (id: string) => {
+    setOrcamentos(prev => prev.filter(o => o.id !== id));
   };
 
   const getClienteById = (id: string) => {
@@ -123,6 +166,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         clientes,
         veiculos,
         notas,
+        orcamentos,
         addCliente,
         updateCliente,
         deleteCliente,
@@ -133,6 +177,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
         updateNota,
         deleteNota,
         nextNumeroNota,
+        addOrcamento,
+        updateOrcamento,
+        deleteOrcamento,
+        nextNumeroOrcamento,
         getClienteById,
         getVeiculoById,
         getVeiculosByClienteId,

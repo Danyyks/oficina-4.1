@@ -1,4 +1,4 @@
-import { Car, FileText, Users, Plus, ChevronRight, Clock } from 'lucide-react';
+import { Car, FileText, Users, Plus, ChevronRight, Clock, ClipboardList } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -56,10 +56,10 @@ export function Dashboard({ onNavigate }: DashboardProps) {
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-3 gap-3">
           <button
             onClick={() => onNavigate('clientes')}
-            className="bg-[#6b9ab8] hover:bg-[#5a87a3] active:bg-[#4d7690] text-white rounded-2xl p-5 flex flex-col items-start gap-3 shadow-sm transition-colors"
+            className="bg-[#6b9ab8] hover:bg-[#5a87a3] active:bg-[#4d7690] text-white rounded-2xl p-4 flex flex-col items-start gap-2 shadow-sm transition-colors"
           >
             <div className="bg-white/20 rounded-xl p-2">
               <Users className="h-5 w-5" />
@@ -69,12 +69,22 @@ export function Dashboard({ onNavigate }: DashboardProps) {
 
           <button
             onClick={() => onNavigate('nova-nota')}
-            className="bg-gray-900 hover:bg-gray-800 active:bg-black text-white rounded-2xl p-5 flex flex-col items-start gap-3 shadow-sm transition-colors"
+            className="bg-gray-900 hover:bg-gray-800 active:bg-black text-white rounded-2xl p-4 flex flex-col items-start gap-2 shadow-sm transition-colors"
           >
             <div className="bg-white/20 rounded-xl p-2">
               <Plus className="h-5 w-5" />
             </div>
             <span className="font-semibold text-sm">Nova Nota</span>
+          </button>
+
+          <button
+            onClick={() => onNavigate('novo-orcamento')}
+            className="bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white rounded-2xl p-4 flex flex-col items-start gap-2 shadow-sm transition-colors"
+          >
+            <div className="bg-white/20 rounded-xl p-2">
+              <ClipboardList className="h-5 w-5" />
+            </div>
+            <span className="font-semibold text-sm">Orçamentos</span>
           </button>
         </div>
 

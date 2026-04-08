@@ -1,7 +1,7 @@
 import jsPDF from 'jspdf';
 import logoImage from '../../assets/7188601ef5c7fc783e87deb6439d04e88e0319a4.png';
 
-export interface NotaPDFParams {
+export interface OrcamentoPDFParams {
   numero: string;
   data: string;
   clienteNome: string;
@@ -29,7 +29,7 @@ async function carregarLogo(): Promise<string | null> {
   }
 }
 
-async function montarPDF(params: NotaPDFParams): Promise<jsPDF> {
+async function montarOrcamentoPDF(params: OrcamentoPDFParams): Promise<jsPDF> {
   const logo = await carregarLogo();
 
   const pdf = new jsPDF('p', 'mm', 'a4');
@@ -40,6 +40,7 @@ async function montarPDF(params: NotaPDFParams): Promise<jsPDF> {
   const GRAY: [number, number, number] = [107, 114, 128];
   const DARK: [number, number, number] = [17, 24, 39];
   const LIGHT_GRAY: [number, number, number] = [229, 231, 235];
+  const AMBER: [number, number, number] = [180, 120, 20];
 
   let y = 15;
 
@@ -63,8 +64,8 @@ async function montarPDF(params: NotaPDFParams): Promise<jsPDF> {
 
   pdf.setFontSize(8.5);
   pdf.setFont('helvetica', 'normal');
-  pdf.setTextColor(...GRAY);
-  pdf.text('Nota de Serviço', MR, y + 4, { align: 'right' });
+  pdf.setTextColor(...AMBER);
+  pdf.text('Orçamento', MR, y + 4, { align: 'right' });
 
   pdf.setFontSize(20);
   pdf.setFont('helvetica', 'bold');
@@ -118,14 +119,14 @@ async function montarPDF(params: NotaPDFParams): Promise<jsPDF> {
   pdf.line(ML, y, MR, y);
   y += 8;
 
-  // ── SERVIÇOS ──────────────────────────────────────────────
+  // ── ITENS DO ORÇAMENTO ────────────────────────────────────
   pdf.setFontSize(7.5);
   pdf.setFont('helvetica', 'bold');
   pdf.setTextColor(...GRAY);
-  pdf.text('SERVIÇOS REALIZADOS', ML, y);
+  pdf.text('ITENS DO ORÇAMENTO', ML, y);
   y += 5;
 
-  pdf.text('SERVIÇO', ML, y);
+  pdf.text('DESCRIÇÃO', ML, y);
   pdf.text('VALOR', MR, y, { align: 'right' });
   y += 2.5;
 
@@ -186,12 +187,12 @@ async function montarPDF(params: NotaPDFParams): Promise<jsPDF> {
   return pdf;
 }
 
-export async function gerarNotaPDF(params: NotaPDFParams): Promise<void> {
-  const pdf = await montarPDF(params);
-  pdf.save(`nota-servico-${params.numero}.pdf`);
+export async function gerarOrcamentoPDF(params: OrcamentoPDFParams): Promise<void> {
+  const pdf = await montarOrcamentoPDF(params);
+  pdf.save(`orcamento-${params.numero}.pdf`);
 }
 
-export async function gerarNotaPDFBlob(params: NotaPDFParams): Promise<Blob> {
-  const pdf = await montarPDF(params);
+export async function gerarOrcamentoPDFBlob(params: OrcamentoPDFParams): Promise<Blob> {
+  const pdf = await montarOrcamentoPDF(params);
   return pdf.output('blob');
 }

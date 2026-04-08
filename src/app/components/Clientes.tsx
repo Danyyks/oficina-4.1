@@ -56,7 +56,7 @@ export function Clientes({ onNavigate }: ClientesProps) {
   };
 
   const handleAddVeiculo = () => {
-    if (!selectedCliente || !veiculoForm.marca || !veiculoForm.modelo || !veiculoForm.placa) return;
+    if (!selectedCliente || !veiculoForm.marca || !veiculoForm.modelo) return;
 
     const newVeiculo: Veiculo = {
       id: Date.now().toString(),
@@ -112,7 +112,7 @@ export function Clientes({ onNavigate }: ClientesProps) {
                     <Input id="modelo" value={veiculoForm.modelo} onChange={(e) => setVeiculoForm({ ...veiculoForm, modelo: e.target.value })} placeholder="Ex: Gol" />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="placa">Placa</Label>
+                    <Label htmlFor="placa">Placa (opcional)</Label>
                     <Input id="placa" value={veiculoForm.placa} onChange={(e) => setVeiculoForm({ ...veiculoForm, placa: e.target.value.toUpperCase() })} placeholder="ABC-1234" />
                   </div>
                   <div className="space-y-2">
@@ -145,7 +145,7 @@ export function Clientes({ onNavigate }: ClientesProps) {
                     <div>
                       <p className="text-sm font-medium text-gray-900">{veiculo.marca} {veiculo.modelo}</p>
                       <p className="text-xs text-gray-500 mt-0.5">
-                        {veiculo.placa}{veiculo.ano && ` · ${veiculo.ano}`}
+                        {veiculo.placa ?? '—'}{veiculo.ano && ` · ${veiculo.ano}`}
                       </p>
                     </div>
                   </div>

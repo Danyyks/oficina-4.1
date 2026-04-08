@@ -6,23 +6,23 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Textarea } from './ui/textarea';
-import { NotaServico, Servico } from '../types';
+import { Orcamento, Servico } from '../types';
 import { toast } from 'sonner';
 
-interface NovaNotaProps {
+interface NovoOrcamentoProps {
   onNavigate: (page: string) => void;
-  notaParaEditar?: NotaServico;
+  orcamentoParaEditar?: Orcamento;
 }
 
-export function NovaNota({ onNavigate, notaParaEditar }: NovaNotaProps) {
-  const { clientes, addNota, updateNota, nextNumeroNota, getVeiculosByClienteId } = useData();
+export function NovoOrcamento({ onNavigate, orcamentoParaEditar }: NovoOrcamentoProps) {
+  const { clientes, addOrcamento, updateOrcamento, nextNumeroOrcamento, getVeiculosByClienteId } = useData();
 
-  const isEditing = !!notaParaEditar;
+  const isEditing = !!orcamentoParaEditar;
 
-  const [selectedClienteId, setSelectedClienteId] = useState(notaParaEditar?.clienteId ?? '');
-  const [selectedVeiculoId, setSelectedVeiculoId] = useState(notaParaEditar?.veiculoId ?? '');
-  const [servicos, setServicos] = useState<Servico[]>(notaParaEditar?.servicos ?? []);
-  const [observacoes, setObservacoes] = useState(notaParaEditar?.observacoes ?? '');
+  const [selectedClienteId, setSelectedClienteId] = useState(orcamentoParaEditar?.clienteId ?? '');
+  const [selectedVeiculoId, setSelectedVeiculoId] = useState(orcamentoParaEditar?.veiculoId ?? '');
+  const [servicos, setServicos] = useState<Servico[]>(orcamentoParaEditar?.servicos ?? []);
+  const [observacoes, setObservacoes] = useState(orcamentoParaEditar?.observacoes ?? '');
   const [servicoForm, setServicoForm] = useState({ nome: '', valor: '' });
 
   const clienteVeiculos = selectedClienteId ? getVeiculosByClienteId(selectedClienteId) : [];
@@ -30,7 +30,7 @@ export function NovaNota({ onNavigate, notaParaEditar }: NovaNotaProps) {
 
   const handleAddServico = () => {
     if (!servicoForm.nome || !servicoForm.valor) {
-      toast.error('Preencha nome e valor do serviço');
+      toast.error('Preencha nome e valor do item');
       return;
     }
     const valor = parseFloat(servicoForm.valor);
@@ -45,33 +45,33 @@ export function NovaNota({ onNavigate, notaParaEditar }: NovaNotaProps) {
     };
     setServicos([...servicos, newServico]);
     setServicoForm({ nome: '', valor: '' });
-    toast.success('Serviço adicionado');
+    toast.success('Item adicionado');
   };
 
   const handleRemoveServico = (id: string) => {
     setServicos(servicos.filter(s => s.id !== id));
   };
 
-  const handleSalvarNota = () => {
+  const handleSalvarOrcamento = () => {
     if (!selectedClienteId || !selectedVeiculoId || servicos.length === 0) {
       toast.error('Preencha todos os campos obrigatórios');
       return;
     }
 
-    if (isEditing && notaParaEditar) {
-      updateNota(notaParaEditar.id, {
+    if (isEditing && orcamentoParaEditar) {
+      updateOrcamento(orcamentoParaEditar.id, {
         clienteId: selectedClienteId,
         veiculoId: selectedVeiculoId,
         servicos,
         observacoes,
         total,
       });
-      toast.success('Nota atualizada com sucesso!');
-      setTimeout(() => onNavigate(`nota-${notaParaEditar.id}`), 500);
+      toast.success('Orçamento atualizado com sucesso!');
+      setTimeout(() => onNavigate(`orcamento-${orcamentoParaEditar.id}`), 500);
     } else {
-      const nota: NotaServico = {
+      const orcamento: Orcamento = {
         id: Date.now().toString(),
-        numero: nextNumeroNota(),
+        numero: nextNumeroOrcamento(),
         data: new Date().toISOString(),
         clienteId: selectedClienteId,
         veiculoId: selectedVeiculoId,
@@ -80,9 +80,9 @@ export function NovaNota({ onNavigate, notaParaEditar }: NovaNotaProps) {
         total,
         status: 'pendente',
       };
-      addNota(nota);
-      toast.success('Nota de serviço criada com sucesso!');
-      setTimeout(() => onNavigate(`nota-${nota.id}`), 500);
+      addOrcamento(orcamento);
+      toast.success('Orçamento criado com sucesso!');
+      setTimeout(() => onNavigate(`orcamento-${orcamento.id}`), 500);
     }
   };
 
@@ -93,8 +93,8 @@ export function NovaNota({ onNavigate, notaParaEditar }: NovaNotaProps) {
         <div className="max-w-2xl mx-auto flex items-center gap-3">
           <button
             onClick={() =>
-              isEditing && notaParaEditar
-                ? onNavigate(`nota-${notaParaEditar.id}`)
+              isEditing && orcamentoParaEditar
+                ? onNavigate(`orcamento-${orcamentoParaEditar.id}`)
                 : onNavigate('dashboard')
             }
             className="p-2 -ml-2 rounded-xl hover:bg-gray-100 transition-colors"
@@ -102,7 +102,7 @@ export function NovaNota({ onNavigate, notaParaEditar }: NovaNotaProps) {
             <ArrowLeft className="h-5 w-5 text-gray-700" />
           </button>
           <h1 className="flex-1 text-base font-semibold text-gray-900">
-            {isEditing ? `Editando Nota #${notaParaEditar?.numero}` : 'Nova Nota de Serviço'}
+            {isEditing ? `Editando Orçamento #${orcamentoParaEditar?.numero}` : 'Novo Orçamento'}
           </h1>
         </div>
       </div>
@@ -156,18 +156,18 @@ export function NovaNota({ onNavigate, notaParaEditar }: NovaNotaProps) {
           </div>
         </div>
 
-        {/* Adicionar Serviço */}
+        {/* Adicionar Item */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="px-4 pt-4 pb-1">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Adicionar Serviço</p>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Adicionar Item</p>
           </div>
           <div className="px-4 pb-4 space-y-3 pt-3">
             <div className="space-y-1.5">
-              <Label className="text-sm text-gray-700">Nome do Serviço</Label>
+              <Label className="text-sm text-gray-700">Descrição do Serviço / Peça</Label>
               <Input
                 value={servicoForm.nome}
                 onChange={(e) => setServicoForm({ ...servicoForm, nome: e.target.value })}
-                placeholder="Ex: Troca de óleo"
+                placeholder="Ex: Troca de óleo, Pastilha de freio..."
                 className="rounded-xl bg-gray-50 border-gray-200"
                 onKeyDown={(e) => e.key === 'Enter' && handleAddServico()}
               />
@@ -187,22 +187,22 @@ export function NovaNota({ onNavigate, notaParaEditar }: NovaNotaProps) {
             </div>
             <Button onClick={handleAddServico} className="w-full rounded-xl">
               <Plus className="mr-2 h-4 w-4" />
-              Adicionar Serviço
+              Adicionar Item
             </Button>
           </div>
         </div>
 
-        {/* Serviços adicionados */}
+        {/* Itens adicionados */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="px-4 pt-4 pb-1 flex items-center justify-between">
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Serviços</p>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Itens do Orçamento</p>
             {servicos.length > 0 && (
               <span className="text-xs text-gray-400">{servicos.length} item(s)</span>
             )}
           </div>
           <div className="px-4 pb-4 pt-3">
             {servicos.length === 0 ? (
-              <p className="text-sm text-gray-400 text-center py-4">Nenhum serviço adicionado</p>
+              <p className="text-sm text-gray-400 text-center py-4">Nenhum item adicionado</p>
             ) : (
               <div className="space-y-2">
                 {servicos.map((servico) => (
@@ -251,8 +251,8 @@ export function NovaNota({ onNavigate, notaParaEditar }: NovaNotaProps) {
       {/* Sticky bottom save button */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 p-4 shadow-lg">
         <div className="max-w-2xl mx-auto">
-          <Button onClick={handleSalvarNota} size="lg" className="w-full rounded-2xl h-12 text-base font-semibold">
-            {isEditing ? 'Salvar Alterações' : 'Salvar Nota de Serviço'}
+          <Button onClick={handleSalvarOrcamento} size="lg" className="w-full rounded-2xl h-12 text-base font-semibold bg-amber-600 hover:bg-amber-700">
+            {isEditing ? 'Salvar Alterações' : 'Salvar Orçamento'}
           </Button>
         </div>
       </div>

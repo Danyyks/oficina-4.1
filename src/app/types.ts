@@ -9,7 +9,7 @@ export interface Veiculo {
   clienteId: string;
   marca: string;
   modelo: string;
-  placa: string;
+  placa?: string;
   ano?: string;
 }
 
@@ -29,4 +29,16 @@ export interface NotaServico {
   observacoes?: string;
   total: number;
   status: 'pendente' | 'pago';
+}
+
+export interface Orcamento {
+  id: string;
+  numero: string;
+  data: string;
+  clienteId: string;
+  veiculoId: string;
+  servicos: Servico[];
+  observacoes?: string;
+  total: number;
+  status: 'pendente' | 'aprovado' | 'recusado';
 }

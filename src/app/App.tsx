@@ -5,13 +5,15 @@ import { Clientes } from './components/Clientes';
 import { NovaNota } from './components/NovaNota';
 import { NotaView } from './components/NotaView';
 import { Historico } from './components/Historico';
+import { NovoOrcamento } from './components/NovoOrcamento';
+import { OrcamentoView } from './components/OrcamentoView';
 import { Toaster } from './components/ui/sonner';
 import { Footer } from './components/Footer';
 
 function AppContent() {
   const [currentPage, setCurrentPage] = useState('dashboard');
   const [previousPage, setPreviousPage] = useState('dashboard');
-  const { notas } = useData();
+  const { notas, orcamentos } = useData();
 
   const navigate = (page: string) => {
     setPreviousPage(currentPage);
@@ -31,6 +33,9 @@ function AppContent() {
     if (currentPage === 'historico') {
       return <Historico onNavigate={navigate} />;
     }
+    if (currentPage === 'novo-orcamento') {
+      return <NovoOrcamento onNavigate={navigate} />;
+    }
     if (currentPage.startsWith('editar-nota-')) {
       const notaId = currentPage.replace('editar-nota-', '');
       const nota = notas.find(n => n.id === notaId);
@@ -40,6 +45,15 @@ function AppContent() {
       const notaId = currentPage.replace('nota-', '');
       const backTo = previousPage === 'dashboard' ? 'dashboard' : 'historico';
       return <NotaView notaId={notaId} onNavigate={navigate} backTo={backTo} />;
+    }
+    if (currentPage.startsWith('editar-orcamento-')) {
+      const orcamentoId = currentPage.replace('editar-orcamento-', '');
+      const orcamento = orcamentos.find(o => o.id === orcamentoId);
+      return <NovoOrcamento onNavigate={navigate} orcamentoParaEditar={orcamento} />;
+    }
+    if (currentPage.startsWith('orcamento-')) {
+      const orcamentoId = currentPage.replace('orcamento-', '');
+      return <OrcamentoView orcamentoId={orcamentoId} onNavigate={navigate} backTo="dashboard" />;
     }
     return <Dashboard onNavigate={navigate} />;
   };
