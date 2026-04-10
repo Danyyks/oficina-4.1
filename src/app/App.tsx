@@ -5,6 +5,7 @@ import { Clientes } from './components/Clientes';
 import { NovaNota } from './components/NovaNota';
 import { NotaView } from './components/NotaView';
 import { Historico } from './components/Historico';
+import { HistoricoOrcamentos } from './components/HistoricoOrcamentos';
 import { NovoOrcamento } from './components/NovoOrcamento';
 import { OrcamentoView } from './components/OrcamentoView';
 import { Toaster } from './components/ui/sonner';
@@ -33,6 +34,9 @@ function AppContent() {
     if (currentPage === 'historico') {
       return <Historico onNavigate={navigate} />;
     }
+    if (currentPage === 'historico-orcamentos') {
+      return <HistoricoOrcamentos onNavigate={navigate} />;
+    }
     if (currentPage === 'novo-orcamento') {
       return <NovoOrcamento onNavigate={navigate} />;
     }
@@ -53,7 +57,8 @@ function AppContent() {
     }
     if (currentPage.startsWith('orcamento-')) {
       const orcamentoId = currentPage.replace('orcamento-', '');
-      return <OrcamentoView orcamentoId={orcamentoId} onNavigate={navigate} backTo="dashboard" />;
+      const backTo = previousPage === 'historico-orcamentos' ? 'historico-orcamentos' : 'dashboard';
+      return <OrcamentoView orcamentoId={orcamentoId} onNavigate={navigate} backTo={backTo} />;
     }
     return <Dashboard onNavigate={navigate} />;
   };

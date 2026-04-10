@@ -39,7 +39,7 @@ export function NovaNota({ onNavigate, notaParaEditar }: NovaNotaProps) {
       return;
     }
     const newServico: Servico = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       nome: servicoForm.nome,
       valor,
     };
@@ -70,7 +70,7 @@ export function NovaNota({ onNavigate, notaParaEditar }: NovaNotaProps) {
       setTimeout(() => onNavigate(`nota-${notaParaEditar.id}`), 500);
     } else {
       const nota: NotaServico = {
-        id: Date.now().toString(),
+        id: crypto.randomUUID(),
         numero: nextNumeroNota(),
         data: new Date().toISOString(),
         clienteId: selectedClienteId,

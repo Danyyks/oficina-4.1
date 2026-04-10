@@ -29,7 +29,7 @@ export function Clientes({ onNavigate }: ClientesProps) {
       setEditingCliente(null);
     } else {
       const newCliente: Cliente = {
-        id: Date.now().toString(),
+        id: crypto.randomUUID(),
         nome: clienteForm.nome,
         telefone: clienteForm.telefone,
       };
@@ -59,7 +59,7 @@ export function Clientes({ onNavigate }: ClientesProps) {
     if (!selectedCliente || !veiculoForm.marca || !veiculoForm.modelo) return;
 
     const newVeiculo: Veiculo = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       clienteId: selectedCliente.id,
       marca: veiculoForm.marca,
       modelo: veiculoForm.modelo,

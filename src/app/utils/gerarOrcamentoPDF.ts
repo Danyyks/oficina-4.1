@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import logoImage from '../../assets/7188601ef5c7fc783e87deb6439d04e88e0319a4.png';
+import { carregarLogo } from './pdfUtils';
 
 export interface OrcamentoPDFParams {
   numero: string;
@@ -15,20 +15,6 @@ export interface OrcamentoPDFParams {
   observacoes?: string;
 }
 
-async function carregarLogo(): Promise<string | null> {
-  try {
-    const res = await fetch(logoImage);
-    const blob = await res.blob();
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.readAsDataURL(blob);
-    });
-  } catch {
-    return null;
-  }
-}
-
 async function montarOrcamentoPDF(params: OrcamentoPDFParams): Promise<jsPDF> {
   const logo = await carregarLogo();
 
@@ -40,7 +26,10 @@ async function montarOrcamentoPDF(params: OrcamentoPDFParams): Promise<jsPDF> {
   const GRAY: [number, number, number] = [107, 114, 128];
   const DARK: [number, number, number] = [17, 24, 39];
   const LIGHT_GRAY: [number, number, number] = [229, 231, 235];
-  const AMBER: [number, number, number] = [180, 120, 20];
+  // Pastel âmbar — badge Orçamento
+  const BADGE_BG: [number, number, number] = [254, 243, 199];   // amber-100
+  const BADGE_BORDER: [number, number, number] = [252, 211, 77]; // amber-300
+  const BADGE_TEXT: [number, number, number] = [180, 83, 9];     // amber-700
 
   let y = 15;
 
@@ -62,23 +51,37 @@ async function montarOrcamentoPDF(params: OrcamentoPDFParams): Promise<jsPDF> {
   pdf.text('Telefone: (11) 99733-0664', infoX, y + 12);
   pdf.text('Rua Carlos Drummond de Andrade n30, Jardim Santa Maria', infoX, y + 17);
 
-  pdf.setFontSize(8.5);
-  pdf.setFont('helvetica', 'normal');
-  pdf.setTextColor(...AMBER);
-  pdf.text('Orçamento', MR, y + 4, { align: 'right' });
+  // ── BADGE TIPO DO DOCUMENTO ───────────────────────────────
+  const badgeLabel = 'ORÇAMENTO';
+  pdf.setFontSize(9);
+  pdf.setFont('helvetica', 'bold');
+  const labelW = pdf.getTextWidth(badgeLabel);
+  const bPadX = 4;
+  const bH = 8;
+  const bW = labelW + bPadX * 2;
+  const bX = MR - bW;
+  const bY = y;
+
+  pdf.setFillColor(...BADGE_BG);
+  pdf.roundedRect(bX, bY, bW, bH, 2, 2, 'F');
+  pdf.setDrawColor(...BADGE_BORDER);
+  pdf.setLineWidth(0.3);
+  pdf.roundedRect(bX, bY, bW, bH, 2, 2, 'S');
+  pdf.setTextColor(...BADGE_TEXT);
+  pdf.text(badgeLabel, MR - bPadX, bY + 5.5, { align: 'right' });
 
   pdf.setFontSize(20);
   pdf.setFont('helvetica', 'bold');
   pdf.setTextColor(...DARK);
-  pdf.text(`#${params.numero}`, MR, y + 12, { align: 'right' });
+  pdf.text(`#${params.numero}`, MR, y + 17, { align: 'right' });
 
   pdf.setFontSize(8.5);
   pdf.setFont('helvetica', 'normal');
   pdf.setTextColor(...GRAY);
   const dataFormatada = new Date(params.data).toLocaleDateString('pt-BR');
-  pdf.text(dataFormatada, MR, y + 18, { align: 'right' });
+  pdf.text(dataFormatada, MR, y + 23, { align: 'right' });
 
-  y += 25;
+  y += 30;
   pdf.setDrawColor(...LIGHT_GRAY);
   pdf.setLineWidth(0.4);
   pdf.line(ML, y, MR, y);
@@ -105,13 +108,13 @@ async function montarOrcamentoPDF(params: OrcamentoPDFParams): Promise<jsPDF> {
   pdf.setTextColor(...GRAY);
   pdf.text(params.clienteTelefone, ML, y);
 
-  if (params.veiculoPlaca) {
-    pdf.text(`Placa: ${params.veiculoPlaca}`, midX, y);
-  }
-
-  if (params.veiculoAno) {
-    y += 5;
-    pdf.text(`Ano: ${params.veiculoAno}`, midX, y);
+  // Placa e Ano na mesma linha (igual à tela)
+  const veiculoInfo = [
+    params.veiculoPlaca ?? null,
+    params.veiculoAno ? `Ano: ${params.veiculoAno}` : null,
+  ].filter(Boolean).join(' · ');
+  if (veiculoInfo) {
+    pdf.text(veiculoInfo, midX, y);
   }
 
   y += 8;
@@ -185,11 +188,6 @@ async function montarOrcamentoPDF(params: OrcamentoPDFParams): Promise<jsPDF> {
   }
 
   return pdf;
-}
-
-export async function gerarOrcamentoPDF(params: OrcamentoPDFParams): Promise<void> {
-  const pdf = await montarOrcamentoPDF(params);
-  pdf.save(`orcamento-${params.numero}.pdf`);
 }
 
 export async function gerarOrcamentoPDFBlob(params: OrcamentoPDFParams): Promise<Blob> {

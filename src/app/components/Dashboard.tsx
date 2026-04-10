@@ -1,4 +1,4 @@
-import { Car, FileText, Users, Plus, ChevronRight, Clock, ClipboardList } from 'lucide-react';
+import { Car, FileText, Users, Plus, ChevronRight, Clock, ClipboardList, CheckCircle, XCircle } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -9,10 +9,10 @@ interface DashboardProps {
 }
 
 export function Dashboard({ onNavigate }: DashboardProps) {
-  const { clientes, veiculos, notas } = useData();
+  const { clientes, veiculos, notas, orcamentos } = useData();
 
   const recentNotas = notas.slice(0, 5);
-
+  const recentOrcamentos = orcamentos.slice(0, 3);
 
   return (
     <div className="min-h-screen bg-[#f5f6f8]">
@@ -78,7 +78,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
           </button>
 
           <button
-            onClick={() => onNavigate('novo-orcamento')}
+            onClick={() => onNavigate('historico-orcamentos')}
             className="bg-amber-600 hover:bg-amber-700 active:bg-amber-800 text-white rounded-2xl p-4 flex flex-col items-start gap-2 shadow-sm transition-colors"
           >
             <div className="bg-white/20 rounded-xl p-2">
@@ -88,7 +88,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
           </button>
         </div>
 
-        {/* Recent Notes */}
+        {/* Notas Recentes */}
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
             <h2 className="font-semibold text-gray-900 text-sm">Notas Recentes</h2>
@@ -153,15 +153,96 @@ export function Dashboard({ onNavigate }: DashboardProps) {
           )}
         </div>
 
-        {/* Histórico button */}
-        <Button
-          variant="outline"
-          className="w-full rounded-2xl border-gray-200 text-gray-700 h-12"
-          onClick={() => onNavigate('historico')}
-        >
-          <FileText className="mr-2 h-4 w-4" />
-          Histórico completo de Notas
-        </Button>
+        {/* Orçamentos Recentes */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+            <h2 className="font-semibold text-gray-900 text-sm">Orçamentos Recentes</h2>
+            <button
+              onClick={() => onNavigate('historico-orcamentos')}
+              className="text-amber-600 text-xs font-medium flex items-center gap-0.5 hover:underline"
+            >
+              Ver todos
+              <ChevronRight className="h-3 w-3" />
+            </button>
+          </div>
+
+          {recentOrcamentos.length === 0 ? (
+            <div className="py-8 flex flex-col items-center gap-2 text-gray-400">
+              <ClipboardList className="h-8 w-8 opacity-40" />
+              <p className="text-sm">Nenhum orçamento criado ainda</p>
+            </div>
+          ) : (
+            <div className="divide-y divide-gray-50">
+              {recentOrcamentos.map((orcamento) => {
+                const cliente = clientes.find(c => c.id === orcamento.clienteId);
+                return (
+                  <button
+                    key={orcamento.id}
+                    className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 active:bg-gray-100 transition-colors text-left"
+                    onClick={() => onNavigate(`orcamento-${orcamento.id}`)}
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="bg-amber-50 rounded-xl p-2 shrink-0">
+                        <ClipboardList className="h-4 w-4 text-amber-600" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">
+                          {cliente?.nome ?? '—'}
+                        </p>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <Clock className="h-3 w-3 text-gray-400 shrink-0" />
+                          <p className="text-xs text-gray-500">
+                            {new Date(orcamento.data).toLocaleDateString('pt-BR')} · Orç. #{orcamento.numero}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end gap-1 shrink-0 ml-2">
+                      <span className="text-sm font-semibold text-gray-900">
+                        R$ {orcamento.total.toFixed(2)}
+                      </span>
+                      {orcamento.status === 'aprovado' ? (
+                        <Badge className="bg-emerald-50 text-emerald-700 border-emerald-100 text-[10px] px-1.5 py-0 h-auto">
+                          <CheckCircle className="h-2.5 w-2.5 mr-0.5" />
+                          Aprovado
+                        </Badge>
+                      ) : orcamento.status === 'recusado' ? (
+                        <Badge className="bg-red-50 text-red-700 border-red-100 text-[10px] px-1.5 py-0 h-auto">
+                          <XCircle className="h-2.5 w-2.5 mr-0.5" />
+                          Recusado
+                        </Badge>
+                      ) : (
+                        <Badge className="bg-amber-50 text-amber-700 border-amber-100 text-[10px] px-1.5 py-0 h-auto">
+                          Pendente
+                        </Badge>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Botões de histórico */}
+        <div className="grid grid-cols-2 gap-3">
+          <Button
+            variant="outline"
+            className="rounded-2xl border-gray-200 text-gray-700 h-12"
+            onClick={() => onNavigate('historico')}
+          >
+            <FileText className="mr-2 h-4 w-4" />
+            Notas
+          </Button>
+          <Button
+            variant="outline"
+            className="rounded-2xl border-amber-200 text-amber-700 hover:bg-amber-50 h-12"
+            onClick={() => onNavigate('historico-orcamentos')}
+          >
+            <ClipboardList className="mr-2 h-4 w-4" />
+            Orçamentos
+          </Button>
+        </div>
       </div>
     </div>
   );

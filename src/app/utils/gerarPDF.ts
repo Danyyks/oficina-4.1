@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import logoImage from '../../assets/7188601ef5c7fc783e87deb6439d04e88e0319a4.png';
+import { carregarLogo } from './pdfUtils';
 
 export interface NotaPDFParams {
   numero: string;
@@ -15,20 +15,6 @@ export interface NotaPDFParams {
   observacoes?: string;
 }
 
-async function carregarLogo(): Promise<string | null> {
-  try {
-    const res = await fetch(logoImage);
-    const blob = await res.blob();
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.readAsDataURL(blob);
-    });
-  } catch {
-    return null;
-  }
-}
-
 async function montarPDF(params: NotaPDFParams): Promise<jsPDF> {
   const logo = await carregarLogo();
 
@@ -40,6 +26,10 @@ async function montarPDF(params: NotaPDFParams): Promise<jsPDF> {
   const GRAY: [number, number, number] = [107, 114, 128];
   const DARK: [number, number, number] = [17, 24, 39];
   const LIGHT_GRAY: [number, number, number] = [229, 231, 235];
+  // Pastel azul — badge Nota de Serviço
+  const BADGE_BG: [number, number, number] = [219, 234, 254];   // blue-100
+  const BADGE_BORDER: [number, number, number] = [147, 197, 253]; // blue-300
+  const BADGE_TEXT: [number, number, number] = [29, 78, 216];    // blue-700
 
   let y = 15;
 
@@ -61,23 +51,37 @@ async function montarPDF(params: NotaPDFParams): Promise<jsPDF> {
   pdf.text('Telefone: (11) 99733-0664', infoX, y + 12);
   pdf.text('Rua Carlos Drummond de Andrade n30, Jardim Santa Maria', infoX, y + 17);
 
-  pdf.setFontSize(8.5);
-  pdf.setFont('helvetica', 'normal');
-  pdf.setTextColor(...GRAY);
-  pdf.text('Nota de Serviço', MR, y + 4, { align: 'right' });
+  // ── BADGE TIPO DO DOCUMENTO ───────────────────────────────
+  const badgeLabel = 'NOTA DE SERVIÇO';
+  pdf.setFontSize(9);
+  pdf.setFont('helvetica', 'bold');
+  const labelW = pdf.getTextWidth(badgeLabel);
+  const bPadX = 4;
+  const bH = 8;
+  const bW = labelW + bPadX * 2;
+  const bX = MR - bW;
+  const bY = y;
+
+  pdf.setFillColor(...BADGE_BG);
+  pdf.roundedRect(bX, bY, bW, bH, 2, 2, 'F');
+  pdf.setDrawColor(...BADGE_BORDER);
+  pdf.setLineWidth(0.3);
+  pdf.roundedRect(bX, bY, bW, bH, 2, 2, 'S');
+  pdf.setTextColor(...BADGE_TEXT);
+  pdf.text(badgeLabel, MR - bPadX, bY + 5.5, { align: 'right' });
 
   pdf.setFontSize(20);
   pdf.setFont('helvetica', 'bold');
   pdf.setTextColor(...DARK);
-  pdf.text(`#${params.numero}`, MR, y + 12, { align: 'right' });
+  pdf.text(`#${params.numero}`, MR, y + 17, { align: 'right' });
 
   pdf.setFontSize(8.5);
   pdf.setFont('helvetica', 'normal');
   pdf.setTextColor(...GRAY);
   const dataFormatada = new Date(params.data).toLocaleDateString('pt-BR');
-  pdf.text(dataFormatada, MR, y + 18, { align: 'right' });
+  pdf.text(dataFormatada, MR, y + 23, { align: 'right' });
 
-  y += 25;
+  y += 30;
   pdf.setDrawColor(...LIGHT_GRAY);
   pdf.setLineWidth(0.4);
   pdf.line(ML, y, MR, y);
@@ -104,13 +108,13 @@ async function montarPDF(params: NotaPDFParams): Promise<jsPDF> {
   pdf.setTextColor(...GRAY);
   pdf.text(params.clienteTelefone, ML, y);
 
-  if (params.veiculoPlaca) {
-    pdf.text(`Placa: ${params.veiculoPlaca}`, midX, y);
-  }
-
-  if (params.veiculoAno) {
-    y += 5;
-    pdf.text(`Ano: ${params.veiculoAno}`, midX, y);
+  // Placa e Ano na mesma linha (igual à tela)
+  const veiculoInfo = [
+    params.veiculoPlaca ?? null,
+    params.veiculoAno ? `Ano: ${params.veiculoAno}` : null,
+  ].filter(Boolean).join(' · ');
+  if (veiculoInfo) {
+    pdf.text(veiculoInfo, midX, y);
   }
 
   y += 8;
@@ -184,11 +188,6 @@ async function montarPDF(params: NotaPDFParams): Promise<jsPDF> {
   }
 
   return pdf;
-}
-
-export async function gerarNotaPDF(params: NotaPDFParams): Promise<void> {
-  const pdf = await montarPDF(params);
-  pdf.save(`nota-servico-${params.numero}.pdf`);
 }
 
 export async function gerarNotaPDFBlob(params: NotaPDFParams): Promise<Blob> {

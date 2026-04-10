@@ -253,8 +253,10 @@ export function OrcamentoView({ orcamentoId, onNavigate, backTo = 'dashboard' }:
                   <p className="text-xs text-gray-500">R. Carlos Drummond de Andrade, 30</p>
                 </div>
               </div>
-              <div className="text-right shrink-0 ml-2">
-                <p className="text-xs text-amber-600 font-medium">Orçamento</p>
+              <div className="text-right shrink-0 ml-2 flex flex-col items-end gap-1">
+                <span className="inline-block bg-amber-100 text-amber-700 border border-amber-300 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                  Orçamento
+                </span>
                 <p className="text-lg font-bold text-gray-900">#{orcamento.numero}</p>
                 <p className="text-xs text-gray-500">
                   {new Date(orcamento.data).toLocaleDateString("pt-BR")}
@@ -273,9 +275,7 @@ export function OrcamentoView({ orcamentoId, onNavigate, backTo = 'dashboard' }:
                 <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Veículo</p>
                 <p className="text-sm font-semibold text-gray-900">{veiculo?.marca} {veiculo?.modelo}</p>
                 <p className="text-xs text-gray-500 mt-0.5">
-                  {veiculo?.placa && veiculo.placa}
-                  {veiculo?.placa && veiculo?.ano && ' · '}
-                  {veiculo?.ano && veiculo.ano}
+                  {[veiculo?.placa, veiculo?.ano].filter(Boolean).join(' · ')}
                 </p>
               </div>
             </div>

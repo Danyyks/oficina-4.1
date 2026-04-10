@@ -60,7 +60,7 @@ export function Historico({ onNavigate }: HistoricoProps) {
                         <span className="text-sm text-gray-700 truncate">{cliente?.nome ?? '—'}</span>
                       </div>
                       <p className="text-xs text-gray-500 mt-0.5 truncate">
-                        {veiculo?.marca} {veiculo?.modelo} · {veiculo?.placa}
+                        {veiculo?.marca} {veiculo?.modelo}{veiculo?.placa ? ` · ${veiculo.placa}` : ''}
                       </p>
                       <p className="text-xs text-gray-400 mt-0.5">
                         {new Date(nota.data).toLocaleDateString('pt-BR')} às {new Date(nota.data).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}

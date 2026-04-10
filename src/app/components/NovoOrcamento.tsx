@@ -39,7 +39,7 @@ export function NovoOrcamento({ onNavigate, orcamentoParaEditar }: NovoOrcamento
       return;
     }
     const newServico: Servico = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       nome: servicoForm.nome,
       valor,
     };
@@ -70,7 +70,7 @@ export function NovoOrcamento({ onNavigate, orcamentoParaEditar }: NovoOrcamento
       setTimeout(() => onNavigate(`orcamento-${orcamentoParaEditar.id}`), 500);
     } else {
       const orcamento: Orcamento = {
-        id: Date.now().toString(),
+        id: crypto.randomUUID(),
         numero: nextNumeroOrcamento(),
         data: new Date().toISOString(),
         clienteId: selectedClienteId,
