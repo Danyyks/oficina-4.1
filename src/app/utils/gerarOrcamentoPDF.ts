@@ -35,7 +35,7 @@ async function montarOrcamentoPDF(params: OrcamentoPDFParams): Promise<jsPDF> {
 
   // ── CABEÇALHO ────────────────────────────────────────────
   if (logo) {
-    pdf.addImage(logo, 'PNG', ML, y, 18, 18);
+    pdf.addImage(logo, 'JPEG', ML, y, 18, 18);
   }
 
   const infoX = logo ? ML + 22 : ML;

@@ -16,7 +16,7 @@ import {
 } from "./ui/alert-dialog";
 import { toast } from "sonner";
 import { gerarNotaPDFBlob } from "../utils/gerarPDF";
-import logoImage from "../../assets/7188601ef5c7fc783e87deb6439d04e88e0319a4.png";
+import logoImage from "../../assets/logo nova.jpeg";
 
 interface NotaViewProps {
   notaId: string;

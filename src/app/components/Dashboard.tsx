@@ -2,7 +2,7 @@ import { Car, FileText, Users, Plus, ChevronRight, Clock, ClipboardList, CheckCi
 import { useData } from '../context/DataContext';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
-import logoImage from '../../assets/7188601ef5c7fc783e87deb6439d04e88e0319a4.png';
+import logoImage from '../../assets/logo nova.jpeg';
 
 interface DashboardProps {
   onNavigate: (page: string) => void;
