@@ -21,8 +21,12 @@ export function Clientes({ onNavigate }: ClientesProps) {
   const [clienteForm, setClienteForm] = useState({ nome: '', telefone: '' });
   const [veiculoForm, setVeiculoForm] = useState({ marca: '', modelo: '', placa: '', ano: '' });
 
+  // Veículos adicionados inline durante criação de cliente
+  const [dialogVeiculos, setDialogVeiculos] = useState<Array<{ marca: string; modelo: string; placa: string; ano: string }>>([]);
+  const [veiculoDialogForm, setVeiculoDialogForm] = useState({ marca: '', modelo: '', placa: '', ano: '' });
+
   const handleAddCliente = () => {
-    if (!clienteForm.nome || !clienteForm.telefone) return;
+    if (!clienteForm.nome) return;
 
     if (editingCliente) {
       updateCliente(editingCliente.id, clienteForm);
@@ -34,10 +38,28 @@ export function Clientes({ onNavigate }: ClientesProps) {
         telefone: clienteForm.telefone,
       };
       addCliente(newCliente);
+      dialogVeiculos.forEach(v => {
+        addVeiculo({
+          id: crypto.randomUUID(),
+          clienteId: newCliente.id,
+          marca: v.marca,
+          modelo: v.modelo,
+          placa: v.placa.toUpperCase(),
+          ano: v.ano || undefined,
+        });
+      });
     }
 
     setClienteForm({ nome: '', telefone: '' });
+    setDialogVeiculos([]);
+    setVeiculoDialogForm({ marca: '', modelo: '', placa: '', ano: '' });
     setIsClienteDialogOpen(false);
+  };
+
+  const handleAddVeiculoToDialog = () => {
+    if (!veiculoDialogForm.marca || !veiculoDialogForm.modelo) return;
+    setDialogVeiculos(prev => [...prev, veiculoDialogForm]);
+    setVeiculoDialogForm({ marca: '', modelo: '', placa: '', ano: '' });
   };
 
   const handleEditCliente = (cliente: Cliente) => {
@@ -89,7 +111,7 @@ export function Clientes({ onNavigate }: ClientesProps) {
             </button>
             <div className="flex-1 min-w-0">
               <h1 className="text-base font-semibold text-gray-900 truncate">{selectedCliente.nome}</h1>
-              <p className="text-xs text-gray-500">{selectedCliente.telefone}</p>
+              {selectedCliente.telefone && <p className="text-xs text-gray-500">{selectedCliente.telefone}</p>}
             </div>
             <Dialog open={isVeiculoDialogOpen} onOpenChange={setIsVeiculoDialogOpen}>
               <DialogTrigger asChild>
@@ -187,6 +209,8 @@ export function Clientes({ onNavigate }: ClientesProps) {
             if (!open) {
               setEditingCliente(null);
               setClienteForm({ nome: '', telefone: '' });
+              setDialogVeiculos([]);
+              setVeiculoDialogForm({ marca: '', modelo: '', placa: '', ano: '' });
             }
           }}>
             <DialogTrigger asChild>
@@ -205,9 +229,68 @@ export function Clientes({ onNavigate }: ClientesProps) {
                   <Input id="nome" value={clienteForm.nome} onChange={(e) => setClienteForm({ ...clienteForm, nome: e.target.value })} placeholder="Nome do cliente" />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="telefone">Telefone</Label>
+                  <Label htmlFor="telefone">Telefone (opcional)</Label>
                   <Input id="telefone" value={clienteForm.telefone} onChange={(e) => setClienteForm({ ...clienteForm, telefone: e.target.value })} placeholder="(00) 00000-0000" />
                 </div>
+
+                {!editingCliente && (
+                  <div className="space-y-2 pt-2 border-t border-gray-100">
+                    <Label className="text-sm font-medium text-gray-700">Veículos (opcional)</Label>
+
+                    {dialogVeiculos.length > 0 && (
+                      <div className="space-y-1">
+                        {dialogVeiculos.map((v, i) => (
+                          <div key={i} className="flex items-center justify-between text-sm bg-gray-50 rounded-lg px-3 py-2">
+                            <span className="text-gray-800">{v.marca} {v.modelo}{v.placa && ` · ${v.placa}`}</span>
+                            <button
+                              type="button"
+                              onClick={() => setDialogVeiculos(prev => prev.filter((_, idx) => idx !== i))}
+                              className="text-red-400 hover:text-red-600 ml-2"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <Input
+                        placeholder="Marca"
+                        value={veiculoDialogForm.marca}
+                        onChange={(e) => setVeiculoDialogForm(f => ({ ...f, marca: e.target.value }))}
+                      />
+                      <Input
+                        placeholder="Modelo"
+                        value={veiculoDialogForm.modelo}
+                        onChange={(e) => setVeiculoDialogForm(f => ({ ...f, modelo: e.target.value }))}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Input
+                        placeholder="Placa (opcional)"
+                        value={veiculoDialogForm.placa}
+                        onChange={(e) => setVeiculoDialogForm(f => ({ ...f, placa: e.target.value.toUpperCase() }))}
+                      />
+                      <Input
+                        placeholder="Ano (opcional)"
+                        value={veiculoDialogForm.ano}
+                        onChange={(e) => setVeiculoDialogForm(f => ({ ...f, ano: e.target.value }))}
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="w-full rounded-xl"
+                      onClick={handleAddVeiculoToDialog}
+                      disabled={!veiculoDialogForm.marca || !veiculoDialogForm.modelo}
+                    >
+                      <Plus className="h-3.5 w-3.5 mr-1" />
+                      Adicionar Veículo
+                    </Button>
+                  </div>
+                )}
               </div>
               <DialogFooter>
                 <Button onClick={handleAddCliente}>{editingCliente ? 'Salvar' : 'Adicionar'}</Button>
@@ -238,7 +321,7 @@ export function Clientes({ onNavigate }: ClientesProps) {
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-gray-900 truncate">{cliente.nome}</p>
                     <p className="text-xs text-gray-500 mt-0.5">
-                      {cliente.telefone} · {getVeiculosByClienteId(cliente.id).length} veículo(s)
+                      {cliente.telefone ? `${cliente.telefone} · ` : ''}{getVeiculosByClienteId(cliente.id).length} veículo(s)
                     </p>
                   </div>
                 </div>

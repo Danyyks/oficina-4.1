@@ -6,6 +6,7 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Textarea } from './ui/textarea';
+import { ClienteSearch } from './ClienteSearch';
 import { NotaServico, Servico } from '../types';
 import { toast } from 'sonner';
 
@@ -116,22 +117,14 @@ export function NovaNota({ onNavigate, notaParaEditar }: NovaNotaProps) {
           <div className="px-4 pb-4 space-y-3 pt-3">
             <div className="space-y-1.5">
               <Label className="text-sm text-gray-700">Cliente</Label>
-              <Select
+              <ClienteSearch
+                clientes={clientes}
                 value={selectedClienteId}
-                onValueChange={(value) => {
+                onChange={(value) => {
                   setSelectedClienteId(value);
                   setSelectedVeiculoId('');
                 }}
-              >
-                <SelectTrigger className="rounded-xl bg-gray-50 border-gray-200">
-                  <SelectValue placeholder="Selecione um cliente" />
-                </SelectTrigger>
-                <SelectContent>
-                  {clientes.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              />
             </div>
 
             <div className="space-y-1.5">

@@ -1,5 +1,11 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import { Cliente, Veiculo, NotaServico, Orcamento } from '../types';
+import {
+  fetchClientes, saveCliente, patchCliente, removeCliente as deleteClienteDb,
+  fetchVeiculos, saveVeiculo, removeVeiculo as deleteVeiculoDb,
+  fetchNotas, saveNota, patchNota, removeNota as deleteNotaDb,
+  fetchOrcamentos, saveOrcamento, patchOrcamento, removeOrcamento as deleteOrcamentoDb,
+} from '../services/dbService';
 
 interface DataContextType {
   clientes: Cliente[];
@@ -27,79 +33,98 @@ interface DataContextType {
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
+// Migra dados do localStorage para o Firestore na primeira vez que o Firestore estiver vazio
+async function migrateLocalStorageToFirestore(
+  firestoreClientes: Cliente[],
+  firestoreVeiculos: Veiculo[],
+  firestoreNotas: NotaServico[],
+  firestoreOrcamentos: Orcamento[],
+): Promise<{ clientes: Cliente[]; veiculos: Veiculo[]; notas: NotaServico[]; orcamentos: Orcamento[] }> {
+  const firestoreVazio =
+    firestoreClientes.length === 0 &&
+    firestoreVeiculos.length === 0 &&
+    firestoreNotas.length === 0 &&
+    firestoreOrcamentos.length === 0;
+
+  if (!firestoreVazio) {
+    return { clientes: firestoreClientes, veiculos: firestoreVeiculos, notas: firestoreNotas, orcamentos: firestoreOrcamentos };
+  }
+
+  const localClientes: Cliente[] = JSON.parse(localStorage.getItem('clientes') || '[]');
+  const localVeiculos: Veiculo[] = JSON.parse(localStorage.getItem('veiculos') || '[]');
+  const localNotas: NotaServico[] = JSON.parse(localStorage.getItem('notas') || '[]');
+  const localOrcamentos: Orcamento[] = JSON.parse(localStorage.getItem('orcamentos') || '[]');
+
+  const temDadosLocais =
+    localClientes.length > 0 ||
+    localVeiculos.length > 0 ||
+    localNotas.length > 0 ||
+    localOrcamentos.length > 0;
+
+  if (!temDadosLocais) {
+    return { clientes: [], veiculos: [], notas: [], orcamentos: [] };
+  }
+
+  // Migra tudo para o Firestore em paralelo
+  await Promise.all([
+    ...localClientes.map(c => saveCliente(c)),
+    ...localVeiculos.map(v => saveVeiculo(v)),
+    ...localNotas.map(n => saveNota(n)),
+    ...localOrcamentos.map(o => saveOrcamento(o)),
+  ]);
+
+  console.info(`[Migração] ${localClientes.length} clientes, ${localVeiculos.length} veículos, ${localNotas.length} notas, ${localOrcamentos.length} orçamentos enviados ao Firestore.`);
+
+  return { clientes: localClientes, veiculos: localVeiculos, notas: localNotas, orcamentos: localOrcamentos };
+}
+
 export function DataProvider({ children }: { children: ReactNode }) {
-  const [clientes, setClientes] = useState<Cliente[]>(() => {
-    const saved = localStorage.getItem('clientes');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [loading, setLoading] = useState(true);
+  const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [veiculos, setVeiculos] = useState<Veiculo[]>([]);
+  const [notas, setNotas] = useState<NotaServico[]>([]);
+  const [orcamentos, setOrcamentos] = useState<Orcamento[]>([]);
 
-  const [veiculos, setVeiculos] = useState<Veiculo[]>(() => {
-    const saved = localStorage.getItem('veiculos');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [notas, setNotas] = useState<NotaServico[]>(() => {
-    const saved = localStorage.getItem('notas');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [notaCounter, setNotaCounter] = useState<number>(() => {
-    const saved = localStorage.getItem('notaCounter');
-    return saved ? parseInt(saved, 10) : 0;
-  });
-
-  const [orcamentos, setOrcamentos] = useState<Orcamento[]>(() => {
-    const saved = localStorage.getItem('orcamentos');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [orcamentoCounter, setOrcamentoCounter] = useState<number>(() => {
-    const saved = localStorage.getItem('orcamentoCounter');
-    return saved ? parseInt(saved, 10) : 0;
-  });
-
+  // Carrega dados do Firestore na inicialização
   useEffect(() => {
-    localStorage.setItem('clientes', JSON.stringify(clientes));
-  }, [clientes]);
+    Promise.all([
+      fetchClientes(),
+      fetchVeiculos(),
+      fetchNotas(),
+      fetchOrcamentos(),
+    ])
+      .then(([c, v, n, o]) => migrateLocalStorageToFirestore(c, v, n, o))
+      .then(({ clientes: c, veiculos: v, notas: n, orcamentos: o }) => {
+        setClientes(c);
+        setVeiculos(v);
+        setNotas([...n].sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime()));
+        setOrcamentos([...o].sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime()));
+      })
+      .catch((err) => console.error('[DataContext] Erro ao carregar dados:', err))
+      .finally(() => setLoading(false));
+  }, []);
 
-  useEffect(() => {
-    localStorage.setItem('veiculos', JSON.stringify(veiculos));
-  }, [veiculos]);
-
-  useEffect(() => {
-    localStorage.setItem('notas', JSON.stringify(notas));
-  }, [notas]);
-
-  useEffect(() => {
-    localStorage.setItem('notaCounter', notaCounter.toString());
-  }, [notaCounter]);
-
-  useEffect(() => {
-    localStorage.setItem('orcamentos', JSON.stringify(orcamentos));
-  }, [orcamentos]);
-
-  useEffect(() => {
-    localStorage.setItem('orcamentoCounter', orcamentoCounter.toString());
-  }, [orcamentoCounter]);
-
+  // Números derivados do maior número já existente (sem contador separado)
   const nextNumeroNota = (): string => {
-    const next = notaCounter + 1;
-    setNotaCounter(next);
-    return next.toString().padStart(4, '0');
+    const max = notas.reduce((m, n) => Math.max(m, parseInt(n.numero, 10) || 0), 0);
+    return (max + 1).toString().padStart(4, '0');
   };
 
   const nextNumeroOrcamento = (): string => {
-    const next = orcamentoCounter + 1;
-    setOrcamentoCounter(next);
-    return next.toString().padStart(4, '0');
+    const max = orcamentos.reduce((m, o) => Math.max(m, parseInt(o.numero, 10) || 0), 0);
+    return (max + 1).toString().padStart(4, '0');
   };
+
+  // ── Clientes ─────────────────────────────────────────────────────────────────
 
   const addCliente = (cliente: Cliente) => {
     setClientes(prev => [...prev, cliente]);
+    saveCliente(cliente).catch(err => console.error('[addCliente]', err));
   };
 
   const updateCliente = (id: string, clienteUpdate: Partial<Cliente>) => {
     setClientes(prev => prev.map(c => c.id === id ? { ...c, ...clienteUpdate } : c));
+    patchCliente(id, clienteUpdate).catch(err => console.error('[updateCliente]', err));
   };
 
   const deleteCliente = (id: string) => {
@@ -108,10 +133,23 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setVeiculos(prev => prev.filter(v => v.clienteId !== id));
     setNotas(prev => prev.filter(n => n.clienteId !== id && !veiculosDoCliente.includes(n.veiculoId)));
     setOrcamentos(prev => prev.filter(o => o.clienteId !== id && !veiculosDoCliente.includes(o.veiculoId)));
+
+    // Deleta em cascata no Firestore
+    deleteClienteDb(id).catch(err => console.error('[deleteCliente]', err));
+    veiculosDoCliente.forEach(vid => deleteVeiculoDb(vid).catch(err => console.error('[deleteVeiculo cascata]', err)));
+    notas
+      .filter(n => n.clienteId === id || veiculosDoCliente.includes(n.veiculoId))
+      .forEach(n => deleteNotaDb(n.id).catch(err => console.error('[deleteNota cascata]', err)));
+    orcamentos
+      .filter(o => o.clienteId === id || veiculosDoCliente.includes(o.veiculoId))
+      .forEach(o => deleteOrcamentoDb(o.id).catch(err => console.error('[deleteOrcamento cascata]', err)));
   };
+
+  // ── Veículos ──────────────────────────────────────────────────────────────────
 
   const addVeiculo = (veiculo: Veiculo) => {
     setVeiculos(prev => [...prev, veiculo]);
+    saveVeiculo(veiculo).catch(err => console.error('[addVeiculo]', err));
   };
 
   const updateVeiculo = (id: string, veiculoUpdate: Partial<Veiculo>) => {
@@ -122,43 +160,65 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setVeiculos(prev => prev.filter(v => v.id !== id));
     setNotas(prev => prev.filter(n => n.veiculoId !== id));
     setOrcamentos(prev => prev.filter(o => o.veiculoId !== id));
+    deleteVeiculoDb(id).catch(err => console.error('[deleteVeiculo]', err));
+    notas
+      .filter(n => n.veiculoId === id)
+      .forEach(n => deleteNotaDb(n.id).catch(err => console.error('[deleteNota cascata]', err)));
+    orcamentos
+      .filter(o => o.veiculoId === id)
+      .forEach(o => deleteOrcamentoDb(o.id).catch(err => console.error('[deleteOrcamento cascata]', err)));
   };
+
+  // ── Notas de Serviço ──────────────────────────────────────────────────────────
 
   const addNota = (nota: NotaServico) => {
     setNotas(prev => [nota, ...prev]);
+    saveNota(nota).catch(err => console.error('[addNota]', err));
   };
 
   const updateNota = (id: string, notaUpdate: Partial<NotaServico>) => {
     setNotas(prev => prev.map(n => n.id === id ? { ...n, ...notaUpdate } : n));
+    patchNota(id, notaUpdate).catch(err => console.error('[updateNota]', err));
   };
 
   const deleteNota = (id: string) => {
     setNotas(prev => prev.filter(n => n.id !== id));
+    deleteNotaDb(id).catch(err => console.error('[deleteNota]', err));
   };
+
+  // ── Orçamentos ────────────────────────────────────────────────────────────────
 
   const addOrcamento = (orcamento: Orcamento) => {
     setOrcamentos(prev => [orcamento, ...prev]);
+    saveOrcamento(orcamento).catch(err => console.error('[addOrcamento]', err));
   };
 
   const updateOrcamento = (id: string, orcamentoUpdate: Partial<Orcamento>) => {
     setOrcamentos(prev => prev.map(o => o.id === id ? { ...o, ...orcamentoUpdate } : o));
+    patchOrcamento(id, orcamentoUpdate).catch(err => console.error('[updateOrcamento]', err));
   };
 
   const deleteOrcamento = (id: string) => {
     setOrcamentos(prev => prev.filter(o => o.id !== id));
+    deleteOrcamentoDb(id).catch(err => console.error('[deleteOrcamento]', err));
   };
 
-  const getClienteById = (id: string) => {
-    return clientes.find(c => c.id === id);
-  };
+  // ── Helpers ───────────────────────────────────────────────────────────────────
 
-  const getVeiculoById = (id: string) => {
-    return veiculos.find(v => v.id === id);
-  };
+  const getClienteById = (id: string) => clientes.find(c => c.id === id);
+  const getVeiculoById = (id: string) => veiculos.find(v => v.id === id);
+  const getVeiculosByClienteId = (clienteId: string) => veiculos.filter(v => v.clienteId === clienteId);
 
-  const getVeiculosByClienteId = (clienteId: string) => {
-    return veiculos.filter(v => v.clienteId === clienteId);
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#f5f6f8] flex items-center justify-center">
+        <div className="text-center">
+          <div className="h-8 w-8 rounded-full border-2 border-gray-200 border-t-gray-600 animate-spin mx-auto mb-3" />
+          <p className="text-sm text-gray-500">Carregando dados...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <DataContext.Provider
