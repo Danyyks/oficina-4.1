@@ -2,9 +2,10 @@ import { createContext, useContext, useState, ReactNode, useEffect } from 'react
 import { Cliente, Veiculo, NotaServico, Orcamento } from '../types';
 import {
   fetchClientes, saveCliente, patchCliente, removeCliente as deleteClienteDb,
-  fetchVeiculos, saveVeiculo, removeVeiculo as deleteVeiculoDb,
+  fetchVeiculos, saveVeiculo, patchVeiculo, removeVeiculo as deleteVeiculoDb,
   fetchNotas, saveNota, patchNota, removeNota as deleteNotaDb,
   fetchOrcamentos, saveOrcamento, patchOrcamento, removeOrcamento as deleteOrcamentoDb,
+  subscribeClientes, subscribeVeiculos, subscribeNotas, subscribeOrcamentos,
 } from '../services/dbService';
 
 interface DataContextType {
@@ -85,23 +86,46 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [notas, setNotas] = useState<NotaServico[]>([]);
   const [orcamentos, setOrcamentos] = useState<Orcamento[]>([]);
 
-  // Carrega dados do Firestore na inicialização
+  // Carrega dados, migra localStorage se necessário e mantém sync em tempo real
   useEffect(() => {
-    Promise.all([
-      fetchClientes(),
-      fetchVeiculos(),
-      fetchNotas(),
-      fetchOrcamentos(),
-    ])
+    const unsubs: (() => void)[] = [];
+    let initializedCount = 0;
+
+    const checkAllInitialized = () => {
+      initializedCount++;
+      if (initializedCount === 4) setLoading(false);
+    };
+
+    const setupListeners = () => {
+      unsubs.push(
+        subscribeClientes(data => {
+          setClientes(data);
+          checkAllInitialized();
+        }),
+        subscribeVeiculos(data => {
+          setVeiculos(data);
+          checkAllInitialized();
+        }),
+        subscribeNotas(data => {
+          setNotas([...data].sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime()));
+          checkAllInitialized();
+        }),
+        subscribeOrcamentos(data => {
+          setOrcamentos([...data].sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime()));
+          checkAllInitialized();
+        }),
+      );
+    };
+
+    Promise.all([fetchClientes(), fetchVeiculos(), fetchNotas(), fetchOrcamentos()])
       .then(([c, v, n, o]) => migrateLocalStorageToFirestore(c, v, n, o))
-      .then(({ clientes: c, veiculos: v, notas: n, orcamentos: o }) => {
-        setClientes(c);
-        setVeiculos(v);
-        setNotas([...n].sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime()));
-        setOrcamentos([...o].sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime()));
-      })
-      .catch((err) => console.error('[DataContext] Erro ao carregar dados:', err))
-      .finally(() => setLoading(false));
+      .then(setupListeners)
+      .catch(err => {
+        console.error('[DataContext] Erro ao carregar dados:', err);
+        setLoading(false);
+      });
+
+    return () => unsubs.forEach(u => u());
   }, []);
 
   // Números derivados do maior número já existente (sem contador separado)
@@ -154,6 +178,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const updateVeiculo = (id: string, veiculoUpdate: Partial<Veiculo>) => {
     setVeiculos(prev => prev.map(v => v.id === id ? { ...v, ...veiculoUpdate } : v));
+    patchVeiculo(id, veiculoUpdate).catch(err => console.error('[updateVeiculo]', err));
   };
 
   const deleteVeiculo = (id: string) => {

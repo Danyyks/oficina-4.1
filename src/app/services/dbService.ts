@@ -15,6 +15,8 @@ import {
   setDoc,
   updateDoc,
   deleteDoc,
+  onSnapshot,
+  type Unsubscribe,
 } from 'firebase/firestore';
 import { getDb } from '../../lib/firebase';
 import { Cliente, Veiculo, NotaServico, Orcamento } from '../types';
@@ -49,8 +51,38 @@ export async function saveVeiculo(veiculo: Veiculo): Promise<void> {
   await setDoc(doc(getDb(), 'veiculos', veiculo.id), veiculo);
 }
 
+export async function patchVeiculo(id: string, data: Partial<Veiculo>): Promise<void> {
+  await updateDoc(doc(getDb(), 'veiculos', id), data as Record<string, unknown>);
+}
+
 export async function removeVeiculo(id: string): Promise<void> {
   await deleteDoc(doc(getDb(), 'veiculos', id));
+}
+
+// ── Listeners em tempo real (onSnapshot) ──────────────────────────────────────
+
+export function subscribeClientes(cb: (data: Cliente[]) => void): Unsubscribe {
+  return onSnapshot(collection(getDb(), 'clientes'), snap => {
+    cb(snap.docs.map(d => ({ id: d.id, ...d.data() } as Cliente)));
+  });
+}
+
+export function subscribeVeiculos(cb: (data: Veiculo[]) => void): Unsubscribe {
+  return onSnapshot(collection(getDb(), 'veiculos'), snap => {
+    cb(snap.docs.map(d => ({ id: d.id, ...d.data() } as Veiculo)));
+  });
+}
+
+export function subscribeNotas(cb: (data: NotaServico[]) => void): Unsubscribe {
+  return onSnapshot(collection(getDb(), 'notas'), snap => {
+    cb(snap.docs.map(d => ({ id: d.id, ...d.data() } as NotaServico)));
+  });
+}
+
+export function subscribeOrcamentos(cb: (data: Orcamento[]) => void): Unsubscribe {
+  return onSnapshot(collection(getDb(), 'orcamentos'), snap => {
+    cb(snap.docs.map(d => ({ id: d.id, ...d.data() } as Orcamento)));
+  });
 }
 
 // ── Notas de Serviço ──────────────────────────────────────────────────────────
