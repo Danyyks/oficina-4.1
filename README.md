@@ -1,6 +1,6 @@
 # Oficina 4.1 — Sistema de Gestão para Oficina Mecânica
 
-Aplicação web PWA (Progressive Web App) para gestão de uma oficina mecânica. Funciona no navegador com dados armazenados localmente (localStorage), sem necessidade de backend ou banco de dados.
+Aplicação web PWA (Progressive Web App) para gestão de uma oficina mecânica. Os dados são sincronizados em tempo real com o Firebase Firestore, permitindo que o sistema seja usado em mais de um dispositivo com as informações sempre atualizadas.
 
 ## Funcionalidades
 
@@ -17,6 +17,7 @@ Aplicação web PWA (Progressive Web App) para gestão de uma oficina mecânica.
 - Vite 6
 - Tailwind CSS 4
 - shadcn/ui (componentes: Button, Badge, Input, Label, Dialog, Select, Textarea, Alert Dialog)
+- Firebase Firestore (banco de dados e sincronização em tempo real)
 - jsPDF (geração de PDF)
 - Sonner (notificações toast)
 - PWA com vite-plugin-pwa
@@ -46,9 +47,11 @@ src/
   app/
     components/       # Telas e componentes UI
       ui/             # Componentes shadcn/ui
-    context/          # DataContext (estado global via localStorage)
+    context/          # DataContext (estado global, sincronizado com o Firestore)
+    services/         # Funções de leitura e escrita no Firestore
     types.ts          # Interfaces TypeScript
     utils/            # Geração de PDF (notas e orçamentos)
+  lib/                # Configuração do Firebase
   assets/             # Logo da oficina
   styles/             # CSS global
   main.tsx
@@ -56,4 +59,4 @@ src/
 
 ## Dados
 
-Todos os dados são persistidos no `localStorage` do navegador. Não há servidor, API ou banco de dados.
+Os dados de clientes, veículos, notas e orçamentos são armazenados no Firebase Firestore e sincronizados em tempo real entre as telas. O acesso ao banco é feito por configuração própria do projeto, mantida fora do repositório.
