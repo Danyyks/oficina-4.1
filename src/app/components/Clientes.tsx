@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, Plus, Trash2, Edit2, Car, Users, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Edit2, Car, Users, ChevronRight, Search } from 'lucide-react';
 import { useData } from '../context/DataContext';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -17,6 +17,7 @@ export function Clientes({ onNavigate }: ClientesProps) {
   const [isClienteDialogOpen, setIsClienteDialogOpen] = useState(false);
   const [isVeiculoDialogOpen, setIsVeiculoDialogOpen] = useState(false);
   const [editingCliente, setEditingCliente] = useState<Cliente | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const [clienteForm, setClienteForm] = useState({ nome: '', telefone: '' });
   const [veiculoForm, setVeiculoForm] = useState({ marca: '', modelo: '', placa: '', ano: '' });
@@ -95,6 +96,10 @@ export function Clientes({ onNavigate }: ClientesProps) {
   };
 
   const clienteVeiculos = selectedCliente ? getVeiculosByClienteId(selectedCliente.id) : [];
+
+  const filteredClientes = searchQuery.trim()
+    ? clientes.filter(c => c.nome.toLowerCase().includes(searchQuery.toLowerCase()))
+    : clientes;
 
   // If a client is selected, show their vehicles (mobile drill-down)
   if (selectedCliente) {
@@ -301,14 +306,31 @@ export function Clientes({ onNavigate }: ClientesProps) {
       </div>
 
       <div className="max-w-2xl mx-auto px-4 py-5">
+        {clientes.length > 0 && (
+          <div className="relative mb-4">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+            <Input
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Buscar cliente pelo nome..."
+              className="rounded-xl bg-gray-50 border-gray-200 pl-9"
+            />
+          </div>
+        )}
+
         {clientes.length === 0 ? (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 py-12 flex flex-col items-center gap-2 text-gray-400">
             <Users className="h-8 w-8 opacity-40" />
             <p className="text-sm">Nenhum cliente cadastrado</p>
           </div>
+        ) : filteredClientes.length === 0 ? (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 py-12 flex flex-col items-center gap-2 text-gray-400">
+            <Users className="h-8 w-8 opacity-40" />
+            <p className="text-sm">Nenhum cliente encontrado</p>
+          </div>
         ) : (
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden divide-y divide-gray-50">
-            {clientes.map((cliente) => (
+            {filteredClientes.map((cliente) => (
               <button
                 key={cliente.id}
                 className="w-full flex items-center justify-between px-4 py-4 hover:bg-gray-50 active:bg-gray-100 transition-colors text-left"
